@@ -36,20 +36,22 @@ var (
 )
 
 type exporter struct {
-	dir       string
-	log       *fileLogger
-	logFile   io.Closer
-	arc       *archive
-	container *sqlstore.Container
-	cli       *whatsmeow.Client
-	col       *collector
-	retries   *mediaRetries
-	phone     *phoneWatch
-	notes     []string
-	testMode  bool
-	onlyChats map[string]bool
-	savedZip  string
-	closed    bool
+	dir            string
+	log            *fileLogger
+	logFile        io.Closer
+	arc            *archive
+	container      *sqlstore.Container
+	cli            *whatsmeow.Client
+	col            *collector
+	retries        *mediaRetries
+	phone          *phoneWatch
+	notes          []string
+	testMode       bool
+	onlyChats      map[string]bool
+	savedZip       string
+	saveDir        string
+	desktopBlocked bool
+	closed         bool
 }
 
 func configureDeviceProps() {
@@ -155,10 +157,26 @@ func (e *exporter) run(ctx context.Context, t *terminal, outDir string) error {
 	if err != nil {
 		return fmt.Errorf("could not save the export: %w", err)
 	}
+	zipPath = e.moveToSaveFolder(zipPath)
 	e.savedZip = zipPath
 	e.showSummary(t, summary, zipPath, time.Since(started))
 	e.cleanUp(ctx, t)
 	return nil
+}
+
+func (e *exporter) moveToSaveFolder(zipPath string) string {
+	if e.saveDir == "" {
+		if e.desktopBlocked {
+			e.notes = append(e.notes, "Your Desktop couldn't be used, so the ZIP was saved in the folder above instead.")
+		}
+		return zipPath
+	}
+	moved, err := moveInto(zipPath, e.saveDir)
+	if err != nil {
+		e.log.Warnf("Moving the ZIP to %s failed: %v", e.saveDir, err)
+		e.notes = append(e.notes, "The ZIP couldn't be moved to your Desktop, so it was saved in the folder above instead.")
+	}
+	return moved
 }
 
 func zipFileName(phone string, now time.Time, test bool) string {

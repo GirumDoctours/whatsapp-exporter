@@ -23,7 +23,7 @@ Saves every chat, photo and file from your WhatsApp or WhatsApp Business account
 3. Link your phone. In WhatsApp, open **Settings → Linked Devices → Link a Device** (on Android: **⋮ → Linked devices → Link a device**) and scan the QR code. If the window is too small for the code, maximize it. If scanning doesn't work, choose the pairing code option and type the 8-character code on your phone.
 4. Keep WhatsApp open on your phone, with the screen unlocked, until it finishes. If the phone locks or WhatsApp is closed, the progress bar shows "Paused: waiting for your phone" and carries on by itself when you open WhatsApp again.
 
-When it's done, a summary shows the totals and your ZIP opens in Finder (Mac) or File Explorer (Windows). It's in the **WhatsApp Exporter** folder in your home folder (`C:\Users\<your name>\WhatsApp Exporter` on Windows), named after your number and the month, for example `15551234567-11-26.zip` (a quick test adds `-test`). The exporter then unlinks itself from your phone, deletes its working files so only the ZIP is left, and closes the window.
+When it's done, a summary shows the totals and the ZIP is saved on your **Desktop**, then shown in Finder (Mac) or File Explorer (Windows). It's named after your number and the month, for example `15551234567-11-26.zip` (a quick test adds `-test`). On a Mac, the first time, macOS may ask whether Terminal can access your Desktop: click Allow. If the Desktop can't be used, the ZIP is saved in the **WhatsApp Exporter** folder in your home folder instead, and the summary says so. The exporter then unlinks itself from your phone, deletes its working files so only the ZIP is left, and closes the window.
 
 If it stops partway (the computer sleeps, Wi-Fi drops, you press Ctrl+C), paste the same line again and choose to continue. It remembers whether it was a quick test or a full export and picks up where it left off.
 
@@ -54,7 +54,7 @@ Requires Go 1.27+ and, for the Mac app, the Xcode command line tools. Build on a
 ./build.sh
 ```
 
-This produces `dist/WhatsApp Exporter` (a universal Mac app for Apple Silicon and Intel) and `dist/WhatsApp Exporter-windows-amd64.exe` and `-arm64.exe`. Run the tests with `go test ./...`. The `-dir` flag sets where the ZIP and working data go; by default it's the folder the app is in.
+This produces `dist/WhatsApp Exporter` (a universal Mac app for Apple Silicon and Intel) and `dist/WhatsApp Exporter-windows-amd64.exe` and `-arm64.exe`. Run the tests with `go test ./...`. By default the ZIP goes to the Desktop (Windows asks the system for it, so a Desktop moved into OneDrive is found) and the working data goes next to the app. The `-dir` flag puts both in the given folder instead.
 
 The Mac and Windows versions share all their code. The few differences live in `platform_darwin.go` and `platform_windows.go`: showing the ZIP in Finder or File Explorer, making the window big enough for the QR code, and plainer symbols in the older Windows console. The Mac app closes its own Terminal window at the end; on Windows, `install.ps1` closes PowerShell after a successful run.
 

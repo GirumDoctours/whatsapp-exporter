@@ -26,6 +26,12 @@ var (
 	procShowWindow       = windows.NewLazySystemDLL("user32.dll").NewProc("ShowWindow")
 )
 
+const desktopAccessHint = ""
+
+func desktopFolder() (string, error) {
+	return windows.KnownFolderPath(windows.FOLDERID_Desktop, 0)
+}
+
 func plainConsole() bool {
 	return os.Getenv("WT_SESSION") == "" && os.Getenv("TERM_PROGRAM") == ""
 }

@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -16,6 +17,16 @@ const (
 var folderPermissionHelp = []string{
 	"The exporter isn't allowed to save files here. Move the WhatsApp Exporter",
 	"folder to your home folder and open it again.",
+}
+
+const desktopAccessHint = ""
+
+func desktopFolder() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "Desktop"), nil
 }
 
 func plainConsole() bool {

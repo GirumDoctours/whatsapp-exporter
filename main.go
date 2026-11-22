@@ -44,7 +44,7 @@ func main() {
 	}
 	t := newTerminal()
 	t.setTitle("WhatsApp Exporter")
-	code, zipPath := run(t, base)
+	code, zipPath := run(t, base, *baseDir == "")
 	t.showCursor()
 	t.say("")
 	if code != 0 {
@@ -71,7 +71,7 @@ func appDir() string {
 	return filepath.Dir(exe)
 }
 
-func run(t *terminal, base string) (int, string) {
+func run(t *terminal, base string, useDesktop bool) (int, string) {
 	t.clearScreen()
 	t.banner()
 
@@ -97,6 +97,10 @@ func run(t *terminal, base string) (int, string) {
 	defer exp.close()
 	exp.testMode = ws.quickTest
 	_ = exp.arc.setMeta(ctx, quickTestMeta, strconv.FormatBool(ws.quickTest))
+	if useDesktop {
+		saveDir, ok := desktopSaveFolder(t)
+		exp.saveDir, exp.desktopBlocked = saveDir, !ok
+	}
 
 	err = exp.run(ctx, t, base)
 	switch {

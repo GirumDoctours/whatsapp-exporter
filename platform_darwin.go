@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 )
@@ -19,6 +20,16 @@ var folderPermissionHelp = []string{
 	"macOS didn't let Terminal save files here. Move the WhatsApp Exporter folder",
 	"to your home folder and open it again, or allow Terminal in System Settings",
 	"→ Privacy & Security → Files and Folders.",
+}
+
+const desktopAccessHint = "Your ZIP will be saved on your Desktop. If macOS asks whether Terminal can access it, click Allow."
+
+func desktopFolder() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "Desktop"), nil
 }
 
 func plainConsole() bool {
