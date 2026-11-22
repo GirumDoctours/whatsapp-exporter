@@ -52,7 +52,7 @@ func main() {
 		os.Exit(code)
 	}
 	t.countdown(closeDelaySeconds, func(left int) string {
-		return fmt.Sprintf("Showing your ZIP in Finder in %d seconds. Press Enter to go now.", left)
+		return fmt.Sprintf("Showing your ZIP in %s in %d seconds. Press Enter to go now.", fileManagerName, left)
 	})
 	revealFile(zipPath)
 	closeTerminalWindow()
@@ -82,9 +82,9 @@ func run(t *terminal, base string) (int, string) {
 	if err != nil {
 		t.say("  %s", t.paint(ansiRed, "Couldn't prepare the working folder: "+err.Error()))
 		if errors.Is(err, fs.ErrPermission) {
-			t.say("  macOS didn't let Terminal save files here. Move the WhatsApp Exporter folder")
-			t.say("  to your home folder and open it again, or allow Terminal in System Settings")
-			t.say("  → Privacy & Security → Files and Folders.")
+			for _, line := range folderPermissionHelp {
+				t.say("  %s", line)
+			}
 		}
 		return 1, ""
 	}

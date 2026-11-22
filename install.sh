@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-repo="GirumDoctours/whatsapp-exporter"
+base="https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw"
 asset="WhatsApp-Exporter-mac.gz"
 folder="$HOME/WhatsApp Exporter"
 app="$folder/WhatsApp Exporter"
@@ -26,7 +26,7 @@ download="$(mktemp "$folder/.download.XXXXXX")"
 trap 'rm -f "$download"' EXIT
 
 say "Downloading WhatsApp Exporter..."
-if ! curl -fL --progress-bar "https://github.com/$repo/releases/latest/download/$asset" | gunzip > "$download"; then
+if ! curl -fL --progress-bar "$base/$asset" | gunzip > "$download"; then
   say "The download didn't finish. Check your internet connection, then paste the command again."
   exit 1
 fi

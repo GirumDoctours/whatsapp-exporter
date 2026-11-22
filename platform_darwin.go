@@ -3,11 +3,31 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 )
+
+const (
+	fileManagerName = "Finder"
+	zoomOutKeys     = "⌘ and the minus key"
+)
+
+var folderPermissionHelp = []string{
+	"macOS didn't let Terminal save files here. Move the WhatsApp Exporter folder",
+	"to your home folder and open it again, or allow Terminal in System Settings",
+	"→ Privacy & Security → Files and Folders.",
+}
+
+func plainConsole() bool {
+	return false
+}
+
+func growWindow(t *terminal, rows, cols int) {
+	t.control(fmt.Sprintf("\033[8;%d;%dt", rows, cols))
+}
 
 const closeWindowScript = `on run argv
 	set targetTTY to item 1 of argv

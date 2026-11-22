@@ -11,4 +11,8 @@ lipo -create -output "dist/WhatsApp Exporter" dist/.exporter-arm64 dist/.exporte
 rm dist/.exporter-arm64 dist/.exporter-amd64
 codesign --force --sign - "dist/WhatsApp Exporter"
 
-echo "Built dist/WhatsApp Exporter"
+for arch in amd64 arm64; do
+  GOOS=windows GOARCH=$arch go build -trimpath -ldflags "$flags" -o "dist/WhatsApp Exporter-windows-$arch.exe" .
+done
+
+echo "Built dist/WhatsApp Exporter (Mac) and dist/WhatsApp Exporter-windows-amd64.exe / -arm64.exe (Windows)"

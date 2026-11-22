@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	stallHeadline = "⚠  Paused: waiting for your phone"
+	stallHeadline = "  Paused: waiting for your phone"
 	stallAdvice   = "   Open WhatsApp on your phone and keep the screen unlocked to continue."
 	hintWidth     = 22
 )
@@ -62,7 +62,7 @@ func (p *progressView) update(fraction float64, known, stalled bool) {
 	}
 	line := "  " + p.t.paint(ansiBold, label) + bar + "  " + percent + "  " + p.t.paint(ansiDim, hint)
 	if stalled {
-		p.t.live(line, "", "  "+p.t.paint(ansiYellow+ansiBold, stallHeadline), "  "+p.t.paint(ansiYellow, stallAdvice))
+		p.t.live(line, "", "  "+p.t.paint(ansiYellow+ansiBold, glyphs.warn+stallHeadline), "  "+p.t.paint(ansiYellow, stallAdvice))
 		return
 	}
 	p.t.live(line)
@@ -87,7 +87,7 @@ func (p *progressView) bounce(width int) string {
 
 func (p *progressView) finish(note string) {
 	elapsed := "done in " + humanDuration(time.Since(p.started))
-	line := "  " + p.t.paint(ansiGreen, "✔ ") + p.t.paint(ansiBold, p.label) + "  " + p.t.paint(ansiDim, firstNonEmpty(note, elapsed))
+	line := "  " + p.t.paint(ansiGreen, glyphs.check+" ") + p.t.paint(ansiBold, p.label) + "  " + p.t.paint(ansiDim, firstNonEmpty(note, elapsed))
 	p.t.live()
 	p.t.say("%s", line)
 }

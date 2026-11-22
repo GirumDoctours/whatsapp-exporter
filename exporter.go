@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
@@ -22,8 +23,11 @@ import (
 )
 
 const (
-	linkedDeviceName = "WhatsApp Exporter"
-	connectTimeout   = 2 * time.Minute
+	linkedDeviceName   = "WhatsApp Exporter"
+	connectTimeout     = 2 * time.Minute
+	qrFullExtraRows    = 9
+	qrCompactExtraRows = 1
+	qrSizeCheckEvery   = 400 * time.Millisecond
 )
 
 var (
@@ -132,7 +136,7 @@ func (e *exporter) run(ctx context.Context, t *terminal, outDir string) error {
 
 	t.clearScreen()
 	t.banner()
-	t.say("  %s Linked to %s", t.paint(ansiGreen, "✔"), t.paint(ansiBold, "+"+phone))
+	t.say("  %s Linked to %s", t.paint(ansiGreen, glyphs.check), t.paint(ansiBold, "+"+phone))
 	t.say("  %s", t.paint(ansiDim, "Keep WhatsApp open on your phone, with the screen unlocked, until this finishes."))
 	if e.testMode {
 		t.say("  %s", t.paint(ansiYellow, fmt.Sprintf("Quick test: only your %d most recent chats will be exported.", testChatLimit)))
@@ -289,7 +293,7 @@ func (e *exporter) showSummary(t *terminal, s exportSummary, zipPath string, ela
 	t.say("  %s      %s", t.paint(ansiDim, "File"), t.paint(ansiBold, filepath.Base(zipPath)))
 	for _, note := range e.notes {
 		t.say("")
-		t.say("  %s", t.paint(ansiYellow, "⚠  "+note))
+		t.say("  %s", t.paint(ansiYellow, glyphs.warn+"  "+note))
 	}
 }
 
@@ -339,15 +343,15 @@ func (e *exporter) cleanUp(ctx context.Context, t *terminal) {
 
 	t.say("")
 	if logoutErr != nil {
-		t.say("  %s", t.paint(ansiYellow, "⚠  Couldn't unlink automatically."))
+		t.say("  %s", t.paint(ansiYellow, glyphs.warn+"  Couldn't unlink automatically."))
 		t.say("     On your phone, open Linked devices and remove \"%s\".", linkedDeviceName)
 	} else {
-		t.say("  %s Unlinked from your phone", t.paint(ansiGreen, "✔"))
+		t.say("  %s Unlinked from your phone", t.paint(ansiGreen, glyphs.check))
 	}
 	if removeErr != nil {
-		t.say("  %s", t.paint(ansiYellow, "⚠  Couldn't delete the working files in "+e.dir))
+		t.say("  %s", t.paint(ansiYellow, glyphs.warn+"  Couldn't delete the working files in "+e.dir))
 	} else {
-		t.say("  %s Working files deleted. Only the ZIP is left.", t.paint(ansiGreen, "✔"))
+		t.say("  %s Working files deleted. Only the ZIP is left.", t.paint(ansiGreen, glyphs.check))
 	}
 }
 
@@ -406,7 +410,7 @@ func (e *exporter) link(ctx context.Context, t *terminal) error {
 		}
 		e.cli.Disconnect()
 		t.say("")
-		t.say("  %s", t.paint(ansiYellow, "⚠  Linking didn't finish: "+err.Error()))
+		t.say("  %s", t.paint(ansiYellow, glyphs.warn+"  Linking didn't finish: "+err.Error()))
 		again := t.choose("Try again?", []menuOption{{label: "Yes, try again"}, {label: "No, quit"}})
 		if again == 1 {
 			return errLinkCancelled
@@ -422,12 +426,17 @@ func (e *exporter) pairOnce(ctx context.Context, t *terminal, phone string) erro
 	if err := e.cli.ConnectContext(ctx); err != nil {
 		return err
 	}
+	var qr *qrScreen
+	if phone == "" {
+		qr = startQRScreen(t)
+		defer qr.stop()
+	}
 	codeRequested := false
 	for item := range qrChan {
 		switch item.Event {
 		case whatsmeow.QRChannelEventCode:
-			if phone == "" {
-				showQR(t, item.Code)
+			if qr != nil {
+				qr.show(item.Code)
 				continue
 			}
 			if codeRequested {
@@ -440,9 +449,12 @@ func (e *exporter) pairOnce(ctx context.Context, t *terminal, phone string) erro
 			}
 			showPairingCode(t, code)
 		case whatsmeow.QRChannelSuccess.Event:
+			if qr != nil {
+				qr.stop()
+			}
 			t.clearScreen()
 			t.banner()
-			t.say("  %s Phone linked", t.paint(ansiGreen, "✔"))
+			t.say("  %s Phone linked", t.paint(ansiGreen, glyphs.check))
 			return nil
 		case whatsmeow.QRChannelTimeout.Event:
 			return errors.New("the code expired before it was used")
@@ -470,7 +482,7 @@ func askPhoneNumber(t *terminal) string {
 	t.say("  %s", t.paint(ansiBold, "What's the phone number on that WhatsApp account?"))
 	t.say("  %s", t.paint(ansiDim, "Include the country code, for example +44 7700 900123"))
 	for {
-		answer := t.ask("  " + t.paint(ansiGreen, "❯ "))
+		answer := t.ask("  " + t.paint(ansiGreen, glyphs.pointer+" "))
 		var digits strings.Builder
 		for _, r := range answer {
 			if r >= '0' && r <= '9' {
@@ -489,26 +501,126 @@ func screenHeader(t *terminal, w io.Writer, subtitle string) {
 	fmt.Fprint(w, "\r\n  "+t.paint(ansiGreen+ansiBold, "WhatsApp Exporter")+t.paint(ansiDim, "  ·  "+subtitle)+"\r\n\r\n")
 }
 
-func showQR(t *terminal, code string) {
-	t.ensureHeight(46, 84)
+type qrScreen struct {
+	t        *terminal
+	mu       sync.Mutex
+	code     string
+	cols     int
+	rows     int
+	done     chan struct{}
+	stopOnce sync.Once
+}
+
+func startQRScreen(t *terminal) *qrScreen {
+	s := &qrScreen{t: t, done: make(chan struct{})}
+	go s.followWindowSize()
+	return s
+}
+
+func (s *qrScreen) show(code string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.code = code
+	s.render(true)
+}
+
+func (s *qrScreen) stop() {
+	s.stopOnce.Do(func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.code = ""
+		close(s.done)
+	})
+}
+
+func (s *qrScreen) followWindowSize() {
+	ticker := time.NewTicker(qrSizeCheckEvery)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-ticker.C:
+			s.mu.Lock()
+			if cols, rows, _ := s.t.size(); s.code != "" && (cols != s.cols || rows != s.rows) {
+				s.render(false)
+			}
+			s.mu.Unlock()
+		}
+	}
+}
+
+func (s *qrScreen) render(grow bool) {
+	t := s.t
+	art, artRows, artCols := qrArt(s.code)
+	if grow {
+		t.ensureSize(artRows+qrFullExtraRows, max(artCols, 80))
+	}
+	cols, rows, known := t.size()
+	s.cols, s.rows = cols, rows
+	layout := pickQRLayout(cols, rows, known, artRows, artCols)
 	t.clearScreen()
 	t.draw(func(w io.Writer) {
-		screenHeader(t, w, "Link your phone")
-		fmt.Fprint(w, "  1. Open WhatsApp on your phone\r\n")
-		fmt.Fprint(w, "  2. Tap "+t.paint(ansiBold, "Settings")+" (iPhone) or "+t.paint(ansiBold, "⋮")+" (Android), then "+t.paint(ansiBold, "Linked devices")+"\r\n")
-		fmt.Fprint(w, "  3. Tap "+t.paint(ansiBold, "Link a device")+" and point your phone at this code\r\n\r\n")
-		qrterminal.GenerateWithConfig(code, qrterminal.Config{
-			Level:          qrterminal.L,
-			Writer:         &indentWriter{w: w, indent: "  "},
-			HalfBlocks:     true,
-			BlackChar:      qrterminal.BLACK_BLACK,
-			WhiteBlackChar: qrterminal.WHITE_BLACK,
-			WhiteChar:      qrterminal.WHITE_WHITE,
-			BlackWhiteChar: qrterminal.BLACK_WHITE,
-			QuietZone:      2,
-		})
-		fmt.Fprint(w, "\r\n  "+t.paint(ansiDim, "Waiting for you to scan… The code refreshes by itself.")+"\r\n")
+		switch layout {
+		case qrFull:
+			screenHeader(t, w, "Link your phone")
+			fmt.Fprint(w, "  1. Open WhatsApp on your phone\r\n")
+			fmt.Fprint(w, "  2. Tap "+t.paint(ansiBold, "Settings")+" (iPhone) or "+t.paint(ansiBold, glyphs.androidMenu)+" (Android), then "+t.paint(ansiBold, "Linked devices")+"\r\n")
+			fmt.Fprint(w, "  3. Tap "+t.paint(ansiBold, "Link a device")+" and point your phone at this code\r\n\r\n")
+			fmt.Fprint(w, art)
+			fmt.Fprint(w, "\r\n  "+t.paint(ansiDim, "Waiting for you to scan… The code refreshes by itself."))
+		case qrCompact:
+			fmt.Fprint(w, art)
+			fmt.Fprint(w, "  "+t.paint(ansiDim, "In WhatsApp, open Linked devices → Link a device and scan this code."))
+		default:
+			screenHeader(t, w, "Link your phone")
+			fmt.Fprint(w, "  "+t.paint(ansiBold, "Make this window bigger to show the QR code.")+"\r\n\r\n")
+			fmt.Fprint(w, "  Maximize the window, or press "+zoomOutKeys+" a few times\r\n")
+			fmt.Fprint(w, "  to make the text smaller. The code appears as soon as it fits.")
+		}
 	})
+}
+
+type qrLayout int
+
+const (
+	qrFull qrLayout = iota
+	qrCompact
+	qrTooSmall
+)
+
+func pickQRLayout(cols, rows int, known bool, artRows, artCols int) qrLayout {
+	switch {
+	case !known:
+		return qrFull
+	case cols < artCols:
+		return qrTooSmall
+	case rows >= artRows+qrFullExtraRows:
+		return qrFull
+	case rows >= artRows+qrCompactExtraRows:
+		return qrCompact
+	}
+	return qrTooSmall
+}
+
+func qrArt(code string) (art string, rows, cols int) {
+	var b strings.Builder
+	qrterminal.GenerateWithConfig(code, qrterminal.Config{
+		Level:          qrterminal.L,
+		Writer:         &indentWriter{w: &b, indent: "  "},
+		HalfBlocks:     true,
+		BlackChar:      qrterminal.BLACK_BLACK,
+		WhiteBlackChar: qrterminal.WHITE_BLACK,
+		WhiteChar:      qrterminal.WHITE_WHITE,
+		BlackWhiteChar: qrterminal.BLACK_WHITE,
+		QuietZone:      2,
+	})
+	art = b.String()
+	lines := strings.Split(strings.TrimRight(art, "\r\n"), "\r\n")
+	for _, line := range lines {
+		cols = max(cols, utf8.RuneCountInString(line))
+	}
+	return art, len(lines), cols
 }
 
 func showPairingCode(t *terminal, code string) {

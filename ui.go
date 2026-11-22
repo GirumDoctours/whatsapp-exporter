@@ -38,6 +38,26 @@ type menuOption struct {
 	hint  string
 }
 
+type glyphSet struct {
+	check, warn, pointer, androidMenu          string
+	topLeft, topRight, bottomLeft, bottomRight string
+}
+
+var glyphs = chooseGlyphs()
+
+func chooseGlyphs() glyphSet {
+	if plainConsole() {
+		return glyphSet{
+			check: "√", warn: "!", pointer: ">", androidMenu: "the menu",
+			topLeft: "┌", topRight: "┐", bottomLeft: "└", bottomRight: "┘",
+		}
+	}
+	return glyphSet{
+		check: "✔", warn: "⚠", pointer: "❯", androidMenu: "⋮",
+		topLeft: "╭", topRight: "╮", bottomLeft: "╰", bottomRight: "╯",
+	}
+}
+
 type keyPress int
 
 const (
@@ -87,15 +107,20 @@ func (t *terminal) setTitle(title string) { t.control("\033]0;" + title + "\007"
 func (t *terminal) hideCursor()           { t.control("\033[?25l") }
 func (t *terminal) showCursor()           { t.control("\033[?25h") }
 
-func (t *terminal) ensureHeight(rows, cols int) {
+func (t *terminal) size() (cols, rows int, known bool) {
 	if !t.interactive {
+		return 0, 0, false
+	}
+	cols, rows, err := term.GetSize(int(os.Stdout.Fd()))
+	return cols, rows, err == nil && cols > 0 && rows > 0
+}
+
+func (t *terminal) ensureSize(rows, cols int) {
+	w, h, known := t.size()
+	if !known || (h >= rows && w >= cols) {
 		return
 	}
-	w, h, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil || (h >= rows && w >= cols) {
-		return
-	}
-	t.control(fmt.Sprintf("\033[8;%d;%dt", max(h, rows), max(w, cols)))
+	growWindow(t, max(h, rows), max(w, cols))
 }
 
 func (t *terminal) clearScreen() {
@@ -273,7 +298,7 @@ func (t *terminal) choose(question string, options []menuOption) int {
 		lines := []string{"", "  " + t.paint(ansiBold, question), ""}
 		for i, option := range options {
 			if i == selected {
-				line := "  " + t.paint(ansiGreen+ansiBold, "❯ "+option.label)
+				line := "  " + t.paint(ansiGreen+ansiBold, glyphs.pointer+" "+option.label)
 				if option.hint != "" {
 					line += "  " + t.paint(ansiDim, option.hint)
 				}
@@ -292,7 +317,7 @@ func (t *terminal) choose(question string, options []menuOption) int {
 		case keyDown:
 			selected = (selected + 1) % len(options)
 		case keyChoose, keyEOF:
-			lines := []string{"", "  " + t.paint(ansiBold, question), "  " + t.paint(ansiGreen, "✔ "+options[selected].label)}
+			lines := []string{"", "  " + t.paint(ansiBold, question), "  " + t.paint(ansiGreen, glyphs.check+" "+options[selected].label)}
 			t.live(lines...)
 			t.mu.Lock()
 			t.liveLines = 0
@@ -367,8 +392,8 @@ func (t *terminal) box(rows [][2]string) {
 		valueWidth = max(valueWidth, utf8.RuneCountInString(row[1]))
 	}
 	inner := labelWidth + valueWidth + 7
-	border := t.paint(ansiTeal, "  ╭"+strings.Repeat("─", inner)+"╮")
-	bottom := t.paint(ansiTeal, "  ╰"+strings.Repeat("─", inner)+"╯")
+	border := t.paint(ansiTeal, "  "+glyphs.topLeft+strings.Repeat("─", inner)+glyphs.topRight)
+	bottom := t.paint(ansiTeal, "  "+glyphs.bottomLeft+strings.Repeat("─", inner)+glyphs.bottomRight)
 	side := t.paint(ansiTeal, "│")
 	t.say("%s", border)
 	for _, row := range rows {

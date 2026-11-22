@@ -1,0 +1,36 @@
+//go:build !darwin && !windows
+
+package main
+
+import (
+	"fmt"
+	"os/exec"
+	"path/filepath"
+)
+
+const (
+	fileManagerName = "your file manager"
+	zoomOutKeys     = "Ctrl and the minus key"
+)
+
+var folderPermissionHelp = []string{
+	"The exporter isn't allowed to save files here. Move the WhatsApp Exporter",
+	"folder to your home folder and open it again.",
+}
+
+func plainConsole() bool {
+	return false
+}
+
+func growWindow(t *terminal, rows, cols int) {
+	t.control(fmt.Sprintf("\033[8;%d;%dt", rows, cols))
+}
+
+func revealFile(path string) {
+	if path == "" {
+		return
+	}
+	_ = exec.Command("xdg-open", filepath.Dir(path)).Start()
+}
+
+func closeTerminalWindow() {}
