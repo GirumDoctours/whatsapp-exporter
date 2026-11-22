@@ -1,0 +1,7 @@
+/dist/
+/whatsapp-exporter
+/whatsapp-exporter.exe
+WhatsApp Exporter Data/
+*.zip
+*.gz
+.DS_Store
