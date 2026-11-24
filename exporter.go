@@ -37,7 +37,7 @@ var (
 
 type exporter struct {
 	dir            string
-	log            *fileLogger
+	log            *logger
 	logFile        io.Closer
 	arc            *archive
 	container      *sqlstore.Container
@@ -52,6 +52,12 @@ type exporter struct {
 	saveDir        string
 	desktopBlocked bool
 	closed         bool
+	redact         bool
+	messagesOnly   bool
+	ai             *haikuClient
+	transcriber    *transcriber
+	people         *peopleBook
+	redaction      *redactionRun
 }
 
 func configureDeviceProps() {
@@ -70,17 +76,19 @@ func openExporter(dir string) (*exporter, error) {
 	if err := os.MkdirAll(filepath.Join(dir, "media"), 0o700); err != nil {
 		return nil, err
 	}
-	log, logFile, err := newFileLogger(filepath.Join(dir, "exporter.log"))
+	logFile, err := attachLogFile(filepath.Join(dir, "exporter.log"))
 	if err != nil {
 		return nil, err
 	}
+	log := appLog
 	e := &exporter{dir: dir, log: log, logFile: logFile}
+	log.Infof("Opening working folder %s", dir)
 	if e.arc, err = openArchive(filepath.Join(dir, "archive.db")); err != nil {
 		e.close()
 		return nil, err
 	}
 	ctx := context.Background()
-	if e.container, err = sqlstore.New(ctx, "sqlite", sqliteDSN(filepath.Join(dir, "session.db")), log.Sub("Store")); err != nil {
+	if e.container, err = sqlstore.New(ctx, "sqlite", sqliteDSN(filepath.Join(dir, "session.db")), log.Sub("WA/Store")); err != nil {
 		e.close()
 		return nil, err
 	}
@@ -89,7 +97,7 @@ func openExporter(dir string) (*exporter, error) {
 		e.close()
 		return nil, err
 	}
-	e.cli = whatsmeow.NewClient(device, log.Sub("Client"))
+	e.cli = whatsmeow.NewClient(device, log.Sub("WA/Client"))
 	e.cli.EnableAutoReconnect = true
 	e.retries = newMediaRetries()
 	e.phone = newPhoneWatch()
@@ -132,6 +140,7 @@ func (e *exporter) run(ctx context.Context, t *terminal, outDir string) error {
 	}
 	_ = e.arc.setMeta(ctx, "phone", phone)
 	_ = e.arc.setMeta(ctx, "last_run", time.Now().Format(time.RFC3339))
+	e.log.Infof("Linked to +%s (quick test %v, messages only %v, redact %v, AI %v)", phone, e.testMode, e.messagesOnly, e.redact, e.ai != nil)
 	if name := e.col.linkedBusinessName(); name != "" {
 		_ = e.arc.setMeta(ctx, "business_name", name)
 	}
@@ -147,21 +156,29 @@ func (e *exporter) run(ctx context.Context, t *terminal, outDir string) error {
 	t.hideCursor()
 	defer t.showCursor()
 
+	done := e.log.timed("Downloading messages")
 	if err := e.downloadMessages(ctx, t); err != nil {
+		e.log.Errorf("Downloading messages stopped: %v", err)
 		return err
 	}
-	if err := e.downloadMedia(ctx, t); err != nil {
-		return err
-	}
-	zipPath, summary, err := e.saveExport(ctx, t, outDir, phone)
+	messages, chats := e.arc.counts(ctx)
+	done("%d messages in %d chats", messages, chats)
+	plan, err := e.prepareFolder(ctx, phone)
 	if err != nil {
+		e.log.Errorf("Preparing the export folder failed: %v", err)
 		return fmt.Errorf("could not save the export: %w", err)
 	}
-	zipPath = e.moveToSaveFolder(zipPath)
-	e.savedZip = zipPath
-	e.showSummary(t, summary, zipPath, time.Since(started))
-	e.cleanUp(ctx, t)
-	return nil
+	if e.messagesOnly {
+		e.log.Infof("Messages only: skipping media downloads")
+	} else {
+		done := e.log.timed("Downloading media")
+		if err := e.downloadMediaInto(ctx, t, plan); err != nil {
+			e.log.Errorf("Downloading media stopped: %v", err)
+			return err
+		}
+		done("")
+	}
+	return e.completeExport(ctx, t, plan, outDir, phone, started)
 }
 
 func (e *exporter) moveToSaveFolder(zipPath string) string {
@@ -172,8 +189,10 @@ func (e *exporter) moveToSaveFolder(zipPath string) string {
 		return zipPath
 	}
 	moved, err := moveInto(zipPath, e.saveDir)
-	if err != nil {
-		e.log.Warnf("Moving the ZIP to %s failed: %v", e.saveDir, err)
+	if err == nil {
+		logPipeline.Infof("Moved %s to %s", filepath.Base(zipPath), e.saveDir)
+	} else {
+		logPipeline.Warnf("Moving the ZIP to %s failed: %v", e.saveDir, err)
 		e.notes = append(e.notes, "The ZIP couldn't be moved to your Desktop, so it was saved in the folder above instead.")
 	}
 	return moved
@@ -231,58 +250,8 @@ func (e *exporter) whileShowing(ctx context.Context, view *progressView, fractio
 	stop()
 }
 
-func (e *exporter) downloadMedia(ctx context.Context, t *terminal) error {
-	view := newProgressView(t, "Downloading media")
-	downloader := newMediaDownloader(e.cli, e.arc, filepath.Join(e.dir, "media"), e.retries, e.phone, e.log.Sub("Media"), e.col.loggedOut)
-	queue, err := downloader.pending(ctx, e.onlyChats)
-	if err != nil {
-		return err
-	}
-	if len(queue) == 0 {
-		view.finish("nothing new to download")
-		return nil
-	}
-	err = downloader.run(ctx, queue, func(r progressReport) {
-		view.update(r.fraction, r.known, r.stalled)
-	})
-	if err != nil {
-		view.abandon()
-		return err
-	}
-	view.finish("")
-	return nil
-}
-
 func (e *exporter) ownName(ctx context.Context, phone string) string {
 	return firstNonEmpty(e.cli.Store.PushName, e.arc.meta(ctx, "business_name"), "+"+phone)
-}
-
-func (e *exporter) saveExport(ctx context.Context, t *terminal, outDir, phone string) (string, exportSummary, error) {
-	view := newProgressView(t, "Saving your export")
-	names := newNameResolver(ctx, e.cli, e.ownName(ctx, phone))
-	fileName := zipFileName(phone, time.Now(), e.testMode)
-	path := availablePath(filepath.Join(outDir, fileName))
-
-	var mu sync.Mutex
-	latest := 0.0
-	stop := every(ctx, progressTick, func() {
-		mu.Lock()
-		fraction := latest
-		mu.Unlock()
-		view.update(fraction, true, false)
-	})
-	summary, err := writeExport(ctx, e.arc, names, filepath.Join(e.dir, "media"), path, phone, time.Local, e.onlyChats, func(fraction float64) {
-		mu.Lock()
-		latest = fraction
-		mu.Unlock()
-	})
-	stop()
-	if err != nil {
-		view.abandon()
-		return "", summary, err
-	}
-	view.finish("")
-	return path, summary, nil
 }
 
 func (e *exporter) showSummary(t *terminal, s exportSummary, zipPath string, elapsed time.Duration) {
@@ -357,6 +326,11 @@ func (e *exporter) cleanUp(ctx context.Context, t *terminal) {
 	}
 	e.close()
 	removeErr := os.RemoveAll(e.dir)
+	if removeErr != nil {
+		e.log.Warnf("Couldn't delete the working folder %s: %v", e.dir, removeErr)
+	} else {
+		e.log.Infof("Unlinked (error: %v) and deleted the working folder", logoutErr)
+	}
 	_ = os.Remove(filepath.Dir(e.dir))
 
 	t.say("")
@@ -369,7 +343,7 @@ func (e *exporter) cleanUp(ctx context.Context, t *terminal) {
 	if removeErr != nil {
 		t.say("  %s", t.paint(ansiYellow, glyphs.warn+"  Couldn't delete the working files in "+e.dir))
 	} else {
-		t.say("  %s Working files deleted. Only the ZIP is left.", t.paint(ansiGreen, glyphs.check))
+		t.say("  %s Working files deleted", t.paint(ansiGreen, glyphs.check))
 	}
 }
 

@@ -281,24 +281,6 @@ func (a *archive) setMedia(ctx context.Context, chatJID, id string, state int, f
 	return err
 }
 
-func (a *archive) savedMediaCounts(ctx context.Context) (map[string]int, error) {
-	rows, err := a.db.QueryContext(ctx, `SELECT chat_jid, COUNT(*) FROM messages WHERE media_state = ? GROUP BY chat_jid`, mediaDone)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	counts := map[string]int{}
-	for rows.Next() {
-		var jid string
-		var n int
-		if err := rows.Scan(&jid, &n); err != nil {
-			return nil, err
-		}
-		counts[jid] = n
-	}
-	return counts, rows.Err()
-}
-
 func (a *archive) listChats(ctx context.Context) ([]chatRecord, error) {
 	rows, err := a.db.QueryContext(ctx, `
 		SELECT m.chat_jid, COALESCE(c.name, ''), COALESCE(c.pn_jid, ''), COALESCE(c.lid_jid, ''),

@@ -76,6 +76,7 @@ func TestPhoneWatchStallsOnlyWhileWaiting(t *testing.T) {
 	if w.repliedSince(sent) {
 		t.Fatal("no reply has come since sending")
 	}
+	time.Sleep(20 * time.Millisecond)
 	w.touch()
 	if !w.repliedSince(sent) {
 		t.Fatal("reply should be seen")

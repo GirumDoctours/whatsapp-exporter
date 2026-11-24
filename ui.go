@@ -218,6 +218,23 @@ func (t *terminal) ask(prompt string) string {
 	return strings.TrimSpace(line)
 }
 
+func (t *terminal) askSecret(prompt string) string {
+	if !t.interactive {
+		return t.ask(prompt)
+	}
+	t.mu.Lock()
+	t.clearLiveLocked()
+	fmt.Fprint(t.out, prompt)
+	t.mu.Unlock()
+	t.showCursor()
+	secret, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Fprintln(t.out)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(secret))
+}
+
 func (t *terminal) waitForEnter(message string) {
 	t.ask("  " + t.paint(ansiDim, message) + " ")
 }
@@ -374,7 +391,7 @@ func (t *terminal) banner() {
 		"Every chat, message and photo,",
 		"saved to one ZIP on this computer.",
 		"",
-		t.paint(ansiDim, "Nothing is uploaded anywhere."),
+		t.paint(ansiDim, "Nothing is uploaded unless you say so."),
 	}
 	t.draw(func(w io.Writer) {
 		fmt.Fprint(w, "\r\n")

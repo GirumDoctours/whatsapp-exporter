@@ -24,6 +24,7 @@ const (
 
 type progressView struct {
 	t       *terminal
+	extra   func() string
 	label   string
 	started time.Time
 	shown   float64
@@ -60,12 +61,16 @@ func (p *progressView) update(fraction float64, known, stalled bool) {
 			hint = "paused"
 		}
 	}
-	line := "  " + p.t.paint(ansiBold, label) + bar + "  " + percent + "  " + p.t.paint(ansiDim, hint)
-	if stalled {
-		p.t.live(line, "", "  "+p.t.paint(ansiYellow+ansiBold, glyphs.warn+stallHeadline), "  "+p.t.paint(ansiYellow, stallAdvice))
-		return
+	lines := []string{"  " + p.t.paint(ansiBold, label) + bar + "  " + percent + "  " + p.t.paint(ansiDim, hint)}
+	if p.extra != nil {
+		if status := p.extra(); status != "" {
+			lines = append(lines, "  "+strings.Repeat(" ", labelWidth)+p.t.paint(ansiDim, status))
+		}
 	}
-	p.t.live(line)
+	if stalled {
+		lines = append(lines, "", "  "+p.t.paint(ansiYellow+ansiBold, glyphs.warn+stallHeadline), "  "+p.t.paint(ansiYellow, stallAdvice))
+	}
+	p.t.live(lines...)
 }
 
 func (p *progressView) bar(width int) string {

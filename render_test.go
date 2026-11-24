@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -169,7 +170,7 @@ func TestRenderIndividualChatLikeIPhone(t *testing.T) {
 	if len(got.Attachments) != 3 {
 		t.Fatalf("attachments = %d, want 3", len(got.Attachments))
 	}
-	if got.Attachments[0].Source != "/media/abc.jpg" {
+	if got.Attachments[0].Source != filepath.Join("/media", "abc.jpg") {
 		t.Errorf("first attachment source = %q", got.Attachments[0].Source)
 	}
 	if string(got.Attachments[2].Data) == "" {

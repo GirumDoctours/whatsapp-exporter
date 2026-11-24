@@ -104,7 +104,7 @@ func (d *mediaDownloader) pending(ctx context.Context, only map[string]bool) ([]
 	return keepSelected(queue, only, func(m storedMessage) string { return m.ChatJID }), nil
 }
 
-func (d *mediaDownloader) run(ctx context.Context, queue []storedMessage, report func(progressReport)) error {
+func (d *mediaDownloader) run(ctx context.Context, queue []storedMessage, report func(progressReport), onDone func(storedMessage)) error {
 	if len(queue) == 0 {
 		return nil
 	}
@@ -124,6 +124,9 @@ func (d *mediaDownloader) run(ctx context.Context, queue []storedMessage, report
 					d.log.Errorf("Failed to record media result for %s: %v", msg.ID, err)
 				}
 				processed.Add(1)
+				if onDone != nil {
+					onDone(msg)
+				}
 			}
 		}()
 	}

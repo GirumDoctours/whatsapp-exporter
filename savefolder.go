@@ -9,14 +9,17 @@ import (
 func desktopSaveFolder(t *terminal) (string, bool) {
 	desktop, err := desktopFolder()
 	if err != nil {
+		logSetup.Warnf("Couldn't find the Desktop: %v", err)
 		return "", false
 	}
 	if desktopAccessHint != "" {
 		t.say("  %s", t.paint(ansiDim, desktopAccessHint))
 	}
 	if !canWriteTo(desktop) {
+		logSetup.Warnf("The Desktop at %s isn't writable", desktop)
 		return "", false
 	}
+	logSetup.Infof("ZIPs will be saved to %s", desktop)
 	return desktop, true
 }
 

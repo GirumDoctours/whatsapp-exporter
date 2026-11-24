@@ -45,25 +45,31 @@ type renderedChat struct {
 }
 
 type chatRenderer struct {
-	title    string
-	names    namer
-	mediaDir string
-	loc      *time.Location
-	edits    map[string]*waE2E.Message
-	revoked  map[string]bool
-	seq      int
-	lines    []string
-	out      renderedChat
+	title     string
+	skipMedia bool
+	names     namer
+	mediaDir  string
+	loc       *time.Location
+	edits     map[string]*waE2E.Message
+	revoked   map[string]bool
+	seq       int
+	lines     []string
+	out       renderedChat
 }
 
 func renderChat(title string, msgs []storedMessage, names namer, mediaDir string, loc *time.Location) renderedChat {
+	return renderChatWith(title, msgs, names, mediaDir, loc, false)
+}
+
+func renderChatWith(title string, msgs []storedMessage, names namer, mediaDir string, loc *time.Location, skipMedia bool) renderedChat {
 	r := &chatRenderer{
-		title:    title,
-		names:    names,
-		mediaDir: mediaDir,
-		loc:      loc,
-		edits:    map[string]*waE2E.Message{},
-		revoked:  map[string]bool{},
+		skipMedia: skipMedia,
+		title:     title,
+		names:     names,
+		mediaDir:  mediaDir,
+		loc:       loc,
+		edits:     map[string]*waE2E.Message{},
+		revoked:   map[string]bool{},
 	}
 	r.collectEditsAndDeletes(msgs)
 	for _, m := range msgs {
@@ -241,7 +247,9 @@ func businessText(msg *waE2E.Message) string {
 
 func (r *chatRenderer) mediaBody(m storedMessage, media mediaPart, caption string) string {
 	var body string
-	if m.MediaState == mediaDone && m.MediaFile != "" {
+	if r.skipMedia {
+		body = lrm + media.kind.omitted
+	} else if m.MediaState == mediaDone && m.MediaFile != "" {
 		name := r.nextAttachmentName(media.ext)
 		r.out.Attachments = append(r.out.Attachments, attachmentFile{
 			Name:     name,
@@ -251,6 +259,11 @@ func (r *chatRenderer) mediaBody(m storedMessage, media mediaPart, caption strin
 		body = lrm + "<attached: " + name + ">"
 		if media.kind == kindDocument && media.fileName != "" {
 			body = media.fileName + " " + body
+		}
+		if media.kind == kindAudio {
+			if text, ok := readTranscript(filepath.Join(r.mediaDir, m.MediaFile)); ok && text != "" {
+				body += "\n" + transcriptPrefix + text
+			}
 		}
 	} else {
 		body = lrm + media.kind.omitted

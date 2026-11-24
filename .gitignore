@@ -5,3 +5,6 @@ WhatsApp Exporter Data/
 *.zip
 *.gz
 .DS_Store
+dictionary-coverage.txt
+.env
+.eval/
