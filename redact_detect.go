@@ -61,6 +61,7 @@ type nameEntry struct {
 	person string
 	part   string
 	common bool
+	plain  bool
 	own    bool
 }
 
@@ -141,7 +142,7 @@ func newDetector(book *peopleBook) *detector {
 				case i > 0:
 					role = "MIDDLE_NAME"
 				}
-				add(part, nameEntry{text: part, person: p.Key, part: role, common: isCommonWord(part), own: p.Own})
+				add(part, nameEntry{text: part, person: p.Key, part: role, common: isCommonWord(part), plain: notANameAlone(part), own: p.Own})
 			}
 		}
 	}
@@ -278,7 +279,7 @@ func (d *detector) detect(text string, chatPeople map[string]bool) []detection {
 			add(start, m[3], catPhone, "", 0.95, d.book.keyForPhone(digits))
 			continue
 		}
-		if m[3] < len(text) && text[m[3]] == '@' {
+		if m[3] < len(text) && text[m[3]] == '@' || groupMentions[strings.ToLower(handle)] {
 			continue
 		}
 		add(start, m[3], catHandle, "", 0.88, "")
@@ -292,6 +293,9 @@ func (d *detector) detect(text string, chatPeople map[string]bool) []detection {
 		if plausibleCard(text[m[0]:m[1]], text) {
 			add(m[0], m[1], catCard, "", 0.97, "")
 		}
+	}
+	for _, span := range cardTails(text) {
+		add(span[0], span[1], catCard, "", 0.9, "")
 	}
 	for _, m := range cvvPattern.FindAllStringSubmatchIndex(text, -1) {
 		add(m[2], m[3], catCVV, "", 0.9, "")
@@ -416,6 +420,8 @@ func (d *detector) detectNames(text string, chatPeople map[string]bool, add func
 		case noticePattern.MatchString(text):
 			continue
 		case (e.common || isCommonWord(lower)) && !(inChat(e) && startsUpper(value)):
+			continue
+		case e.plain && !(inChat(e) && startsUpper(value)):
 			continue
 		case e.common:
 			conf = 0.45

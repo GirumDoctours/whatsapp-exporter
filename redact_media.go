@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unicode/utf8"
 
 	"github.com/ledongthuc/pdf"
@@ -78,6 +79,7 @@ type textRecognizer interface {
 type mediaTotals struct {
 	Checked     int
 	IDDocuments int
+	PhotoDocs   int
 	Blacked     int
 	GPSRemoved  int
 	Documents   int
@@ -274,6 +276,10 @@ func (m *mediaChecker) process(path string) {
 		m.replaceWhole(path, data, signal, true)
 		return
 	}
+	if m.looksLikePersonalDocument(res.Lines) {
+		m.replaceDocumentPhoto(path, data)
+		return
+	}
 	lines := res.Lines
 	boxes := m.piiBoxes(lines)
 	if len(boxes) > 0 {
@@ -403,6 +409,17 @@ func (m *mediaChecker) replaceWhole(path string, data []byte, reason string, rea
 	logMedia.Infof("Whole photo replaced (%s): %s", reason, path)
 }
 
+func (m *mediaChecker) replaceDocumentPhoto(path string, data []byte) {
+	placeholder, err := placeholderImage(data, path, placeholderPII)
+	if err != nil {
+		logMedia.Warnf("Couldn't make a placeholder for %s: %v", path, err)
+		return
+	}
+	m.store(path, placeholder)
+	m.count(func(t *mediaTotals) { t.PhotoDocs++ })
+	logMedia.Infof("Whole photo replaced (personal document): %s", path)
+}
+
 func (m *mediaChecker) idSignal(res ocrResult) string {
 	for _, b := range res.Barcodes {
 		if strings.Contains(strings.ToUpper(b.Kind), "PDF417") {
@@ -412,8 +429,8 @@ func (m *mediaChecker) idSignal(res ocrResult) string {
 	if idScore(res.Lines) >= idScoreThreshold {
 		return "ID document wording"
 	}
-	if len(res.Faces) > 0 && cardLayout(res) {
-		return "face next to card-shaped text"
+	if len(res.Faces) > 0 && cardLayout(res) && hasIDCardSign(res.Lines, time.Now()) {
+		return "face next to card-shaped text with ID details"
 	}
 	if m.isIDDocument(res.Lines) {
 		return "the AI judged it an ID document"
@@ -546,13 +563,20 @@ func (m *mediaChecker) piiBoxes(lines []ocrLine) []ocrLine {
 		return nil
 	}
 	det := m.r.det()
-	var boxes []ocrLine
-	for _, l := range lines {
+	boxed := map[int]bool{}
+	for i, l := range lines {
 		for _, d := range det.detect(l.Text, nil) {
 			if d.Confidence >= ocrBoxThreshold && d.Category != catLink && d.Category != catDomain {
-				boxes = append(boxes, l)
+				boxed[i] = true
 				break
 			}
+		}
+	}
+	withLabelledValues(lines, boxed)
+	var boxes []ocrLine
+	for i, l := range lines {
+		if boxed[i] {
+			boxes = append(boxes, l)
 		}
 	}
 	return boxes

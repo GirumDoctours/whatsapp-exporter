@@ -353,6 +353,7 @@ func (run *redactionRun) reportText(t redactionTotals) []byte {
 	if m := t.Media; m.Checked+m.Removed > 0 {
 		fmt.Fprintf(&b, nl+"Photos and PDFs checked: %s%s", formatCount(m.Checked), nl)
 		fmt.Fprintf(&b, "ID documents replaced: %s%s", formatCount(m.IDDocuments), nl)
+		fmt.Fprintf(&b, "Photos of personal documents replaced: %s%s", formatCount(m.PhotoDocs), nl)
 		fmt.Fprintf(&b, "PDFs with personal details replaced: %s%s", formatCount(m.Documents), nl)
 		fmt.Fprintf(&b, "PDFs without readable text replaced: %s%s", formatCount(m.Unreadable), nl)
 		fmt.Fprintf(&b, "Other files replaced because they can't be checked (documents, spreadsheets, archives): %s%s", formatCount(m.Removed), nl)

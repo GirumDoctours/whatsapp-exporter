@@ -144,6 +144,7 @@ type chatJob struct {
 	partnerRef string
 	pCount     int
 	titleLabel string
+	nameWords  map[string]bool
 	items      []*item
 	byLine     map[int][]*item
 	slots      []slot
@@ -178,6 +179,7 @@ func (r *redactor) redactChat(ctx context.Context, in chatInput) chatOutput {
 		j.resolveRoles(ctx)
 	}
 	j.mergeAddresses()
+	j.dropWrongNames()
 	base := j.stats
 	out := j.finish()
 	if r.skipRefine {
@@ -188,6 +190,7 @@ func (r *redactor) redactChat(ctx context.Context, in chatInput) chatOutput {
 		return out
 	}
 	j.slots = refined
+	j.dropWrongNames()
 	j.stats = base
 	final := j.finish()
 	if gap, missing := uncovered(out.Slots, final.Slots); missing {
@@ -1126,7 +1129,7 @@ func (j *chatJob) spreadValues() []spreadValue {
 		}
 	}
 	for _, s := range j.slots {
-		if s.Confidence < propagateMinConf {
+		if s.Confidence < propagateMinConf || j.wrongNameTag(s) {
 			continue
 		}
 		parsed, ok := j.r.dict.parse(s.Tag)
@@ -1165,7 +1168,7 @@ func (j *chatJob) spreadValues() []spreadValue {
 			}
 		case parsed.Kind == tagEntity && attr == "NAME":
 			stem := parts[0]
-			if utf8.RuneCountInString(stem) >= 3 && hasUpper(stem) && !isCommonWord(stem) {
+			if utf8.RuneCountInString(stem) >= 3 && hasUpper(stem) && !isCommonWord(stem) && !notANameAlone(stem) {
 				if _, seen := best[strings.ToLower(stem)]; !seen {
 					best[strings.ToLower(stem)] = slot{Tag: s.Tag, Value: stem, Confidence: s.Confidence * 0.9}
 				}
@@ -1173,7 +1176,7 @@ func (j *chatJob) spreadValues() []spreadValue {
 		}
 	}
 	if j.in.IsGroup {
-		if stem := cleanName(j.titleLabel); utf8.RuneCountInString(stem) >= 4 && !isCommonWord(stem) {
+		if stem := cleanName(j.titleLabel); utf8.RuneCountInString(stem) >= 4 && !isCommonWord(stem) && !onlyNonNames(stem) {
 			if _, seen := best[strings.ToLower(stem)]; !seen {
 				best[strings.ToLower(stem)] = slot{Tag: "{{GROUP_NAME}}", Value: stem, Confidence: 0.99}
 			}

@@ -358,6 +358,7 @@ func enforceConsistency(slots []slot, d *tagDictionary) consistencyFix {
 		}
 		for _, attr := range attrs {
 			numbers := byAttr[attr]
+			chosen := map[string]int{}
 			fuzzy := identityAttributes[attr]
 			match := func(a, b string) bool {
 				if fuzzy {
@@ -370,8 +371,11 @@ func enforceConsistency(slots []slot, d *tagDictionary) consistencyFix {
 					continue
 				}
 				n := max(m.parsed.Number, 1)
-				target := 0
+				target := chosen[m.value]
 				for k, values := range numbers {
+					if chosen[m.value] != 0 {
+						break
+					}
 					for _, v := range values {
 						if match(v, m.value) && (target == 0 || k < target) {
 							target = k
@@ -393,6 +397,7 @@ func enforceConsistency(slots []slot, d *tagDictionary) consistencyFix {
 					}
 					slots[m.idx].Tag = m.parsed.withNumber(target).String()
 				}
+				chosen[m.value] = target
 				numbers[target] = append(numbers[target], m.value)
 			}
 		}
