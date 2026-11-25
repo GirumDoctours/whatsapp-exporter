@@ -296,13 +296,31 @@ func (t *terminal) readKey() keyPress {
 }
 
 func (t *terminal) choose(question string, options []menuOption) int {
+	selected, key := t.pick(question, options)
+	if key == keyInterrupt {
+		t.say("")
+		t.say("  Cancelled.")
+		os.Exit(130)
+	}
+	return selected
+}
+
+func (t *terminal) confirm(question, yes, yesHint, no, noHint string) bool {
 	if !t.interactive {
-		return t.chooseByNumber(question, options)
+		return false
+	}
+	selected, key := t.pick(question, []menuOption{{label: yes, hint: yesHint}, {label: no, hint: noHint}})
+	return key == keyChoose && selected == 0
+}
+
+func (t *terminal) pick(question string, options []menuOption) (int, keyPress) {
+	if !t.interactive {
+		return t.chooseByNumber(question, options), keyChoose
 	}
 	fd := int(os.Stdin.Fd())
 	state, err := term.MakeRaw(fd)
 	if err != nil {
-		return t.chooseByNumber(question, options)
+		return t.chooseByNumber(question, options), keyChoose
 	}
 	t.hideCursor()
 	restore := func() {
@@ -328,7 +346,7 @@ func (t *terminal) choose(question string, options []menuOption) int {
 	}
 	for {
 		t.live(render()...)
-		switch t.readKey() {
+		switch key := t.readKey(); key {
 		case keyUp:
 			selected = (selected - 1 + len(options)) % len(options)
 		case keyDown:
@@ -341,13 +359,11 @@ func (t *terminal) choose(question string, options []menuOption) int {
 			fmt.Fprint(t.out, "\r\n")
 			t.mu.Unlock()
 			restore()
-			return selected
+			return selected, key
 		case keyInterrupt:
 			t.live()
 			restore()
-			t.say("")
-			t.say("  Cancelled.")
-			os.Exit(130)
+			return selected, key
 		}
 	}
 }

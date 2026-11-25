@@ -387,8 +387,10 @@ func (e *exporter) completeExport(ctx context.Context, t *terminal, plan *export
 	if e.transcriber != nil {
 		logTranscribe.Infof("Transcription finished: %s", e.transcriber.summary())
 	}
-	e.cleanUp(ctx, t)
-	t.say("")
+	if !e.testMode {
+		e.cleanUp(ctx, t)
+		t.say("")
+	}
 	zipPath, err := writeOutputs(ctx, t, outputJob{dir: plan.dir, outDir: outDir, phone: phone, test: e.testMode, messagesOnly: e.messagesOnly, redaction: e.redaction})
 	if err != nil {
 		logPipeline.Errorf("Saving the ZIP failed: %v", err)
@@ -458,7 +460,7 @@ func (e *exporter) removeExportFolder(t *terminal, dir string) {
 		}
 		return
 	}
-	if e.redact {
+	if e.redact && !e.stillWorking() {
 		t.say("  %s Original messages and files deleted", t.paint(ansiGreen, glyphs.check))
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +48,7 @@ type exporter struct {
 	phone          *phoneWatch
 	notes          []string
 	testMode       bool
+	historyReady   bool
 	onlyChats      map[string]bool
 	savedZip       string
 	saveDir        string
@@ -153,6 +155,48 @@ func (e *exporter) run(ctx context.Context, t *terminal, outDir string) error {
 		t.say("  %s", t.paint(ansiYellow, fmt.Sprintf("Quick test: only your %d most recent chats will be exported.", testChatLimit)))
 	}
 	t.say("")
+
+	if err := e.exportChats(ctx, t, outDir, phone, started); err != nil || !e.testMode {
+		return err
+	}
+	if !e.wantsFullRun(ctx, t) {
+		e.cleanUp(ctx, t)
+		return nil
+	}
+	e.switchToFullRun(ctx)
+	t.say("")
+	t.say("  %s", t.paint(ansiBold, "Full run"))
+	t.say("  %s", t.paint(ansiDim, "Keep WhatsApp open on your phone, with the screen unlocked, until this finishes."))
+	t.say("")
+	return e.exportChats(ctx, t, outDir, phone, time.Now())
+}
+
+func (e *exporter) wantsFullRun(ctx context.Context, t *terminal) bool {
+	yes := t.confirm("The quick test is done. Do you want to do a full run now?",
+		"Yes, export everything", "same choices as the test · no need to link again",
+		"No, exit", "unlinks from your phone and deletes the working files")
+	yes = yes && ctx.Err() == nil
+	e.log.Infof("Full run after the quick test: %v", yes)
+	return yes
+}
+
+func (e *exporter) switchToFullRun(ctx context.Context) {
+	e.testMode = false
+	e.onlyChats = nil
+	e.notes = nil
+	e.historyReady = true
+	if e.ai != nil {
+		e.ai = e.ai.withFreshUsage()
+	}
+	_ = e.arc.setMeta(ctx, quickTestMeta, strconv.FormatBool(false))
+	_ = e.arc.setMeta(ctx, "last_run", time.Now().Format(time.RFC3339))
+}
+
+func (e *exporter) stillWorking() bool {
+	return e.arc != nil && !e.closed
+}
+
+func (e *exporter) exportChats(ctx context.Context, t *terminal, outDir, phone string, started time.Time) error {
 	t.hideCursor()
 	defer t.showCursor()
 
@@ -213,12 +257,14 @@ func (e *exporter) downloadMessages(ctx context.Context, t *terminal) error {
 	if freshLink {
 		syncShare = 0.8
 	}
-	err := e.col.waitForHistory(ctx, freshLink, func(r progressReport) {
-		view.update(r.fraction*syncShare, r.known, r.stalled)
-	})
-	if err != nil {
-		view.abandon()
-		return err
+	if !e.historyReady {
+		err := e.col.waitForHistory(ctx, freshLink, func(r progressReport) {
+			view.update(r.fraction*syncShare, r.known, r.stalled)
+		})
+		if err != nil {
+			view.abandon()
+			return err
+		}
 	}
 	_ = e.arc.setMeta(ctx, "initial_sync_done", "1")
 

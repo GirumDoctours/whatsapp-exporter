@@ -18,7 +18,7 @@ Saves every chat, photo and file from your WhatsApp or WhatsApp Business account
      ```
 
 2. Use the arrow keys and Enter (or Space) to choose:
-   - **Run a quick test**: your 10 latest chats, in about 3 minutes.
+   - **Run a quick test**: your 10 latest chats, in about 3 minutes. When it's done, it asks whether to do a full run now. **Yes** carries on with the same choices, without linking your phone again. **No** unlinks and exits.
    - **Export everything**: every chat, photo and file. About 25 minutes for a busy account, longer for very large ones.
 3. Choose **Messages only** (the default) or **Messages and media**. Messages only skips photos, videos, voice notes and files, so it's much faster; the chat text shows "image omitted" where media was, and the ZIP name ends in `-messages-only`.
    With media, voice notes can also be turned into text: each one is sent to Deepgram's Nova-3 speech-to-text with your own Deepgram key (console.deepgram.com; new accounts get free credit, then roughly 26 cents per hour of audio). The transcript appears under the voice note in `_chat.txt`. In the redacted copy the transcript is redacted like any message, and the audio itself is replaced. Press Enter without a key to skip this.
@@ -26,7 +26,7 @@ Saves every chat, photo and file from your WhatsApp or WhatsApp Business account
 5. Link your phone. In WhatsApp, open **Settings → Linked Devices → Link a Device** (on Android: **⋮ → Linked devices → Link a device**) and scan the QR code. If the window is too small for the code, maximize it. If scanning doesn't work, choose the pairing code option and type the 8-character code on your phone.
 6. Keep WhatsApp open on your phone, with the screen unlocked, until it finishes. If the phone locks or WhatsApp is closed, the progress bar shows "Paused: waiting for your phone" and carries on by itself when you open WhatsApp again.
 
-When it's done, a summary shows the totals and the ZIP is saved on your **Desktop**, then shown in Finder (Mac) or File Explorer (Windows). It's named after your number and the month, for example `15551234567-11-26.zip` (a quick test adds `-test`), or `WhatsApp-11-26-redacted.zip` if you redact. On a Mac, the first time, macOS may ask whether Terminal can access your Desktop: click Allow. If the Desktop can't be used, the ZIP is saved in the **WhatsApp Exporter** folder in your home folder instead, and the summary says so. The exporter then unlinks itself from your phone, deletes its working files so only the ZIP is left, and closes the window.
+When it's done, a summary shows the totals and the ZIP is saved on your **Desktop**, then shown in Finder (Mac) or File Explorer (Windows). It's named after your number and the month, for example `15551234567-11-26.zip` (a quick test adds `-test`), or `WhatsApp-11-26-redacted.zip` if you redact. On a Mac, the first time, macOS may ask whether Terminal can access your Desktop: click Allow. If the Desktop can't be used, the ZIP is saved in the **WhatsApp Exporter** folder in your home folder instead, and the summary says so. The exporter then (after a quick test, once you answer No to a full run) unlinks itself from your phone, deletes its working files so only the ZIP is left, and closes the window.
 
 Each successful quick test deletes the ZIPs from earlier quick tests, so they don't pile up. Full exports are never deleted.
 

@@ -98,6 +98,12 @@ func newModelClient(apiKey, model string) *haikuClient {
 	}
 }
 
+func (h *haikuClient) withFreshUsage() *haikuClient {
+	fresh := *h
+	fresh.usage = &aiUsage{}
+	return &fresh
+}
+
 func (h *haikuClient) check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
