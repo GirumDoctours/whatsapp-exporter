@@ -4,383 +4,94 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WhatsApp Exporter</title>
-<meta name="description" content="Save every WhatsApp chat, photo and file into one ZIP on your Mac or Windows PC. Optionally hide personal details before you share it. Free and open source.">
+<meta name="description" content="Save every WhatsApp chat, photo and file into one ZIP on your Mac or Windows PC, with optional redaction of personal details. Free and open source.">
 <meta property="og:title" content="WhatsApp Exporter">
-<meta property="og:description" content="Every chat, photo and file in one ZIP on your computer, with optional redaction of personal details.">
-<meta property="og:type" content="website">
+<meta property="og:description" content="Every chat, photo and file in one ZIP on your computer. Free, open source, unofficial.">
 <meta property="og:image" content="https://girumdoctours.github.io/whatsapp-exporter/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235b4bff'/%3E%3Cpath d='M20 22h24v6H20zM20 32h16v6H20zM20 42h20v6H20z' fill='white'/%3E%3C/svg%3E">
-<script>document.documentElement.classList.add('js')</script>
+<meta name="color-scheme" content="light">
 <style>
-:root{
-  --bg:#f7f6f2;--bg2:#efece4;--card:#ffffff;--ink:#16151a;--muted:#5d5a66;--line:#e3dfd5;
-  --accent:#5b4bff;--accent2:#ff7a59;--accent-ink:#ffffff;--soft:#ecebff;--tag:#5b4bff;--tagbg:#ecebff;
-  --term:#14131a;--termink:#e9e7f2;--termdim:#8b88a0;--ok:#3ccf91;--shadow:0 20px 50px -24px rgba(31,25,80,.35);
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#0f0e14;--bg2:#15141c;--card:#1b1a24;--ink:#f1effa;--muted:#a7a3b8;--line:#2a2836;
-    --accent:#8a7dff;--accent2:#ff8e70;--accent-ink:#0f0e14;--soft:#24213a;--tag:#b5acff;--tagbg:#2a2645;
-    --term:#0a0910;--shadow:0 20px 50px -24px rgba(0,0,0,.7);
-  }
-}
+:root{--green:#25d366;--dark:#128c7e;--ink:#111b21;--muted:#54656f;--line:#e2e8ea;--soft:#f0f2f5}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-a{color:var(--accent)}
-code,pre,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"JetBrains Mono",monospace}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
-nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
-.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center}
-.logo svg{width:16px;height:16px}
-nav .links{display:flex;gap:22px;align-items:center}
-nav .links a{color:var(--muted);text-decoration:none;font-size:15px}
-nav .links a:hover{color:var(--ink)}
-.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 20px;font:600 16px/1 inherit;font-family:inherit;cursor:pointer;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease,background .15s}
-.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 10px 24px -12px var(--accent)}
-.btn.primary:hover{transform:translateY(-1px)}
-.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-.btn.ghost:hover{background:var(--card)}
-.btn.small{padding:8px 14px;font-size:14px;border-radius:10px}
-header.hero{position:relative;overflow:hidden;padding:84px 0 40px}
-.glow{position:absolute;inset:-30% -10% auto -10%;height:620px;background:radial-gradient(40% 50% at 25% 30%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 70%),radial-gradient(35% 45% at 80% 20%,color-mix(in srgb,var(--accent2) 24%,transparent),transparent 70%);filter:blur(10px);pointer-events:none}
-.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--muted)}
-.pill b{color:var(--ink);font-weight:600}
-h1{font-size:clamp(38px,5.4vw,62px);line-height:1.04;letter-spacing:-.035em;margin:18px 0 18px}
-h1 .grad{background:linear-gradient(100deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lede{font-size:clamp(17px,1.6vw,20px);color:var(--muted);max-width:34em;margin:0 0 28px}
-.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.meta{margin-top:18px;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px}
-.meta span::before{content:"✓";color:var(--ok);font-weight:700;margin-right:6px}
-.term{background:var(--term);color:var(--termink);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;font-size:14px;line-height:1.55;border:1px solid rgba(255,255,255,.06)}
-.term .bar{display:flex;gap:7px;padding:12px 14px;background:rgba(255,255,255,.04)}
-.term .bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}
-.term .bar i:nth-child(2){background:#febc2e}.term .bar i:nth-child(3){background:#28c840}
-.term pre{margin:0;padding:18px 20px 22px;white-space:pre-wrap;word-break:break-word}
-.t-dim{color:var(--termdim)}.t-ok{color:var(--ok)}.t-acc{color:#b5acff}.t-warm{color:#ffb39e}.t-b{font-weight:700;color:#fff}
-.caret{display:inline-block;width:8px;height:16px;background:var(--termink);vertical-align:-3px;animation:blink 1.1s steps(2) infinite}
-@keyframes blink{50%{opacity:0}}
-section{padding:72px 0}
-.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;color:var(--accent)}
-h2{font-size:clamp(28px,3.4vw,40px);letter-spacing:-.025em;line-height:1.12;margin:10px 0 14px}
-.sub{color:var(--muted);max-width:40em;margin:0 0 36px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
-.step .n{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:700;background:var(--soft);color:var(--accent);margin-bottom:14px}
-.step h3,.feat h3{margin:0 0 6px;font-size:19px;letter-spacing:-.01em}
-.step p,.feat p{margin:0;color:var(--muted);font-size:16px}
-#get{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.install{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
-.tabs{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:16px}
-.tabs button{border:0;background:transparent;color:var(--muted);font:600 15px inherit;font-family:inherit;padding:9px 16px;border-radius:9px;cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
-.cmd{position:relative;background:var(--term);color:var(--termink);border-radius:14px;padding:18px 18px 18px 18px;box-shadow:var(--shadow)}
-.cmd .label{font-size:12px;color:var(--termdim);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.cmd code{display:block;font-size:14px;line-height:1.55;word-break:break-all;color:#fff}
-.copy{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:6px 12px;font:600 13px inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
-.copy:hover{background:rgba(255,255,255,.18)}
-.howto{margin:18px 0 0;padding:0;list-style:none;counter-reset:s}
-.howto li{position:relative;padding-left:34px;margin:0 0 12px;color:var(--muted)}
-.howto li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:7px;background:var(--soft);color:var(--accent);font-size:13px;font-weight:700;display:grid;place-items:center}
-.howto b{color:var(--ink)}
-kbd{font:600 13px/1 ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:3px 6px;color:var(--ink)}
-.note{font-size:14px;color:var(--muted);margin-top:14px}
-.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.feat .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--soft);margin-bottom:14px;font-size:20px}
-.zip{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center}
-.tree{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;font-size:14.5px;line-height:1.9}
-.tree .d{color:var(--ink);font-weight:600}.tree .f{color:var(--muted)}.tree .i1{padding-left:22px}.tree .i2{padding-left:44px}
-.bubbles{display:grid;gap:10px}
-.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.compare .card{padding:20px}
-.compare h4{margin:0 0 12px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.msg{background:var(--bg);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:15px;margin-bottom:10px}
-.msg .who{font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:2px}
-.msg.me{border-radius:14px 14px 4px 14px;margin-left:24px;background:var(--soft);border-color:transparent}
-.tag{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--tagbg);color:var(--tag);border-radius:6px;padding:1px 6px;white-space:nowrap}
-.msg .tag{font-size:12px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.chip{font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted)}
-.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.fact{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-.fact .big{font-size:26px;font-weight:750;letter-spacing:-.02em}
-.fact .small{font-size:14px;color:var(--muted)}
-details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 18px;margin-bottom:10px}
-summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";color:var(--accent);font-size:20px;line-height:1}
-details[open] summary::after{content:"–"}
-details p{margin:0 0 14px;color:var(--muted)}
-.honest{border-left:3px solid var(--accent2);padding:18px 22px;border-radius:0 14px 14px 0;background:var(--card)}
-.honest p{margin:0;color:var(--muted)}
-footer{padding:44px 0 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
-footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;transition:all .2s;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
-.js .reveal.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none;transition:none}.caret{animation:none}html{scroll-behavior:auto}}
-@media (max-width:900px){
-  .hero-grid,.install,.zip{grid-template-columns:1fr}
-  .steps,.feats{grid-template-columns:1fr 1fr}
-  .facts{grid-template-columns:1fr 1fr}
-  nav .links a:not(.btn){display:none}
-}
-@media (max-width:620px){
-  body{font-size:16px}
-  .wrap{padding:0 16px}
-  header.hero{padding:56px 0 24px}
-  section{padding:56px 0}
-  .steps,.feats,.compare{grid-template-columns:1fr}
-  .term{font-size:12.5px}
-  .tabs{display:flex}
-  .tabs button{flex:1}
-}
+body{margin:0;background:#fff;color:var(--ink);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:720px;margin:0 auto;padding:56px 20px 40px}
+h1{font-size:clamp(32px,6vw,44px);line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
+h2{font-size:22px;margin:40px 0 12px}
+p{margin:0 0 14px}
+.lede{font-size:19px;color:var(--muted)}
+.small{font-size:14px;color:var(--muted)}
+a{color:var(--dark)}
+.tabs{display:flex;gap:8px;margin:20px 0 12px}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);font:600 15px inherit;font-family:inherit;padding:8px 18px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.cmd{display:flex;gap:10px;align-items:flex-start;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px}
+.cmd code{flex:1;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+.copy{flex:0 0 auto;background:var(--dark);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+ol,ul{margin:12px 0 0;padding-left:22px}
+li{margin-bottom:6px}
+.tag{font:13px ui-monospace,Menlo,monospace;background:#e7fce3;color:#0b6e4f;border-radius:5px;padding:1px 5px}
+footer{max-width:720px;margin:0 auto;padding:20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#top"><span class="logo"><svg viewBox="0 0 16 16" fill="#fff"><rect x="2" y="3" width="12" height="2.2" rx="1"/><rect x="2" y="7" width="8" height="2.2" rx="1"/><rect x="2" y="11" width="10" height="2.2" rx="1"/></svg></span>WhatsApp Exporter</a>
-    <div class="links">
-      <a href="#how">How it works</a>
-      <a href="#redact">Redaction</a>
-      <a href="#faq">FAQ</a>
-      <a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a>
-      <a class="btn primary small" href="#get">Get it</a>
-    </div>
+<main>
+  <h1>WhatsApp Exporter</h1>
+  <p class="lede">Save every WhatsApp chat, photo, voice note and file into one ZIP on your Mac or Windows PC. Optionally hide names, numbers and other personal details first.</p>
+  <p class="small">Free and <a href="https://github.com/GirumDoctours/whatsapp-exporter">open source</a>. Unofficial: not made by or affiliated with WhatsApp or Meta.</p>
+
+  <h2>Get it</h2>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-os="mac">Mac</button>
+    <button role="tab" aria-selected="false" data-os="win">Windows</button>
   </div>
-</nav>
-
-<header class="hero" id="top">
-  <div class="glow"></div>
-  <div class="wrap hero-grid">
-    <div>
-      <span class="pill"><b>Free</b> · open source · Mac &amp; Windows</span>
-      <h1>All your WhatsApp chats, <span class="grad">in one ZIP</span> on your computer.</h1>
-      <p class="lede">Save every chat, photo, voice note and file from WhatsApp or WhatsApp Business. Laid out like WhatsApp's own export, with every chat in one go. Hide names, numbers and other personal details before you share it, if you want to.</p>
-      <div class="cta">
-        <a class="btn primary" href="#get" id="heroGet">Get it for your computer</a>
-        <a class="btn ghost" href="#how">See how it works</a>
-      </div>
-      <div class="meta"><span>Runs on your computer</span><span>No account needed</span><span>Try 10 chats in about 3 minutes</span></div>
-    </div>
-    <div class="term reveal" aria-label="What the exporter looks like while it runs">
-      <div class="bar"><i></i><i></i><i></i></div>
-<pre><span class="t-b">WhatsApp Exporter</span>
-
-<span class="t-dim">What would you like to do?</span>
-<span class="t-ok">✔</span> Run a quick test  <span class="t-dim">your 10 latest chats</span>
-
-<span class="t-dim">What should the ZIP contain?</span>
-<span class="t-ok">✔</span> Redact PII, then zip
-
-<span class="t-ok">✔</span> Linked to your phone
-<span class="t-ok">✔</span> Downloading messages   <span class="t-dim">done in 48 sec</span>
-<span class="t-ok">✔</span> Checking personal details
-<span class="t-ok">✔</span> Saving the redacted ZIP
-
-<span class="t-acc">╭────────────────────────────╮
-│</span>  Chats        10           <span class="t-acc">│
-│</span>  Messages     6,900        <span class="t-acc">│
-│</span>  Photos       319          <span class="t-acc">│
-╰────────────────────────────╯</span>
-<span class="t-dim">Saved in</span>  ~/Desktop <span class="caret"></span></pre>
-    </div>
+  <div id="mac">
+    <div class="cmd"><code id="mac-line">/bin/bash -c "$(curl -fsSL https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.sh)"</code><button class="copy" data-copy="mac-line">Copy</button></div>
+    <ol>
+      <li>Open <b>Terminal</b> (⌘ Space, type Terminal, Enter), paste the line and press Enter.</li>
+      <li>Pick with the arrow keys. Start with <b>Run a quick test</b> (10 chats, about 3 minutes).</li>
+      <li>On your phone: <b>Settings → Linked Devices → Link a Device</b>, and scan the code.</li>
+      <li>Keep WhatsApp open. The ZIP lands on your Desktop.</li>
+    </ol>
   </div>
-</header>
-
-<section id="how">
-  <div class="wrap">
-    <div class="eyebrow">How it works</div>
-    <h2>Three steps, no setup.</h2>
-    <p class="sub">It's a small app you start from your computer's command window. You pick a few options with the arrow keys, link your phone once, and it does the rest.</p>
-    <div class="steps">
-      <div class="card step reveal"><div class="n">1</div><h3>Paste one line</h3><p>Copy the command below into Terminal on a Mac or PowerShell on Windows. It downloads the app and starts it.</p></div>
-      <div class="card step reveal"><div class="n">2</div><h3>Pick your options</h3><p>Quick test or everything, messages only or with media, and whether to hide personal details.</p></div>
-      <div class="card step reveal"><div class="n">3</div><h3>Scan the code</h3><p>Link it like WhatsApp Web, from Linked Devices on your phone. Keep WhatsApp open until the ZIP is saved on your Desktop.</p></div>
-    </div>
+  <div id="win" hidden>
+    <div class="cmd"><code id="win-line">irm https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.ps1 | iex</code><button class="copy" data-copy="win-line">Copy</button></div>
+    <ol>
+      <li>Open <b>PowerShell</b> (Start, type PowerShell, Enter), paste the line and press Enter.</li>
+      <li>Pick with the arrow keys. Start with <b>Run a quick test</b> (10 chats, about 3 minutes).</li>
+      <li>On your phone: <b>Settings → Linked Devices → Link a Device</b>, and scan the code.</li>
+      <li>Keep WhatsApp open. The ZIP lands on your Desktop.</li>
+    </ol>
   </div>
-</section>
+  <p class="small" style="margin-top:14px">Needs macOS 13+ or 64-bit Windows 10/11.</p>
 
-<section id="get">
-  <div class="wrap install">
-    <div>
-      <div class="eyebrow">Download</div>
-      <h2>Get it running in a minute.</h2>
-      <p class="sub" style="margin-bottom:22px">Pick your computer, copy the line, paste it, and press Enter.</p>
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tab-mac" aria-selected="true" data-os="mac">Mac</button>
-        <button role="tab" id="tab-win" aria-selected="false" data-os="win">Windows</button>
-      </div>
-      <div class="cmd" id="cmd-mac">
-        <div class="label"><span>Paste into Terminal</span><button class="copy" data-copy="mac-line">Copy</button></div>
-        <code id="mac-line">/bin/bash -c "$(curl -fsSL https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.sh)"</code>
-      </div>
-      <div class="cmd" id="cmd-win" hidden>
-        <div class="label"><span>Paste into PowerShell</span><button class="copy" data-copy="win-line">Copy</button></div>
-        <code id="win-line">irm https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.ps1 | iex</code>
-      </div>
-      <p class="note">Need macOS 13 or newer, or 64-bit Windows 10 or 11. Prefer to read what it does first? See <a href="https://gist.github.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377">the install script and README</a> or <a href="https://github.com/GirumDoctours/whatsapp-exporter">the source code</a>.</p>
-    </div>
-    <div>
-      <ol class="howto" id="howto-mac">
-        <li>Open <b>Terminal</b>: press <kbd>⌘</kbd> <kbd>Space</kbd>, type <b>Terminal</b>, press <kbd>Enter</kbd>.</li>
-        <li>Paste the line and press <kbd>Enter</kbd>.</li>
-        <li>Choose with the arrow keys and <kbd>Enter</kbd>. Start with <b>Run a quick test</b>.</li>
-        <li>On your phone: <b>Settings → Linked Devices → Link a Device</b>, then scan the code. If the code doesn't fit, make the window bigger.</li>
-        <li>Keep WhatsApp open and unlocked. Your ZIP appears on the <b>Desktop</b>. If macOS asks about Desktop access, click <b>Allow</b>.</li>
-      </ol>
-      <ol class="howto" id="howto-win" hidden>
-        <li>Open <b>PowerShell</b>: click <b>Start</b>, type <b>PowerShell</b>, press <kbd>Enter</kbd>.</li>
-        <li>Paste the line and press <kbd>Enter</kbd>.</li>
-        <li>Choose with the arrow keys and <kbd>Enter</kbd>. Start with <b>Run a quick test</b>.</li>
-        <li>On your phone: <b>Settings → Linked Devices → Link a Device</b> (Android: <b>⋮ → Linked devices</b>), then scan the code.</li>
-        <li>Keep WhatsApp open and unlocked. Your ZIP appears on the <b>Desktop</b>. The app isn't code-signed, so antivirus may ask about it once.</li>
-      </ol>
-    </div>
-  </div>
-</section>
-
-<section id="what">
-  <div class="wrap zip">
-    <div>
-      <div class="eyebrow">What you get</div>
-      <h2>One tidy ZIP, one folder per chat.</h2>
-      <p class="sub">Every one-to-one chat, group and archived chat, each with its messages in <code>_chat.txt</code> and its photos, videos, voice notes and files next to it. There's a spreadsheet of every chat and a report of anything the phone no longer has.</p>
-      <div class="chips"><span class="chip">Individual chats</span><span class="chip">Groups</span><span class="chip">Archived chats</span><span class="chip">Photos &amp; videos</span><span class="chip">Voice notes</span><span class="chip">Documents</span><span class="chip">Optional voice-note transcripts</span></div>
-    </div>
-    <div class="tree mono reveal">
-      <div class="d">📦 15551234567-11-26.zip</div>
-      <div class="i1 d">📁 Ada Example</div>
-      <div class="i2 f">📄 _chat.txt</div>
-      <div class="i2 f">🖼 00000001.jpg</div>
-      <div class="i2 f">🎙 00000002.opus</div>
-      <div class="i1 d">📁 GP-Book club</div>
-      <div class="i2 f">📄 _chat.txt</div>
-      <div class="i2 f">📎 00000014.pdf</div>
-      <div class="i1 f">📊 index.csv</div>
-      <div class="i1 f">📋 report.txt</div>
-    </div>
-  </div>
-</section>
-
-<section id="redact" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
-  <div class="wrap">
-    <div class="eyebrow">Optional redaction</div>
-    <h2>Share chats without sharing people.</h2>
-    <p class="sub">Choose <b>Redact PII</b> and every personal detail is swapped for a clear tag, so the conversation still reads naturally. Names, phone numbers, emails, handles, addresses, ages, ID numbers, bank details and links are covered. ID photos are replaced, documents are replaced, and text in screenshots is blacked out.</p>
-    <div class="compare">
-      <div class="card reveal">
-        <h4>Before</h4>
-        <div class="msg"><div class="who">Maya Okafor</div>Hi! I'm Maya, 34, flying in from Leeds on 13 March. My sister Zoe will come too, her number is +44 7700 900123</div>
-        <div class="msg me"><div class="who">You</div>Great, Dr. Lind at Northwind Clinic can see you on the 14th 🙂</div>
-      </div>
-      <div class="card reveal">
-        <h4>After</h4>
-        <div class="msg"><div class="who"><span class="tag">{{PATIENT_FULL_NAME}}</span></div>Hi! I'm <span class="tag">{{PATIENT_FIRST_NAME}}</span>, <span class="tag">{{PATIENT_AGE}}</span>, flying in from <span class="tag">{{PATIENT_HOME_CITY}}</span> on <span class="tag">{{ARRIVAL_DATE}}</span>. My sister <span class="tag">{{PATIENT_SISTER_FIRST_NAME}}</span> will come too, her number is <span class="tag">{{PATIENT_SISTER_PHONE}}</span></div>
-        <div class="msg me"><div class="who"><span class="tag">{{COORDINATOR_FULL_NAME}}</span></div>Great, Dr. <span class="tag">{{DOCTOR_LAST_NAME}}</span> at <span class="tag">{{CLINIC_NAME}}</span> can see you on <span class="tag">{{APPOINTMENT_DATE}}</span> 🙂</div>
-      </div>
-    </div>
-    <p class="note">Made-up example. The same person always gets the same tag throughout a chat, and a second person with the same role is numbered.</p>
-  </div>
-</section>
-
-<section id="privacy">
-  <div class="wrap">
-    <div class="eyebrow">Privacy &amp; cost</div>
-    <h2>Your chats stay on your computer.</h2>
-    <p class="sub">Exporting is free and happens entirely on your computer. Redaction is optional. It uses Claude, Anthropic's AI, with your own API key, so you pay Anthropic directly and only for what you use.</p>
-    <div class="feats">
-      <div class="card feat reveal"><div class="ic">🖥️</div><h3>Local by default</h3><p>The ZIP and its working files live on your computer. Nothing is uploaded unless you choose redaction or voice-note transcripts.</p></div>
-      <div class="card feat reveal"><div class="ic">🛡️</div><h3>Details hidden first</h3><p>When redacting, known names, numbers and emails are hidden on your computer before chat text goes to Claude. Photos are checked on your computer; in rare borderline cases the text read from a photo is checked too.</p></div>
-      <div class="card feat reveal"><div class="ic">🧹</div><h3>Cleans up after itself</h3><p>When it's done it unlinks from your phone and deletes its working files, so only the ZIP is left. If you redact, the original isn't kept.</p></div>
-    </div>
-    <div class="facts" style="margin-top:18px">
-      <div class="fact reveal"><div class="big">Free</div><div class="small">to export, no account needed</div></div>
-      <div class="fact reveal"><div class="big">~$1</div><div class="small">to redact 10 busy chats with photos, on your own Anthropic key</div></div>
-      <div class="fact reveal"><div class="big">~3 min</div><div class="small">for a quick test of your 10 latest chats</div></div>
-      <div class="fact reveal"><div class="big">~25 min</div><div class="small">to export everything from a busy account</div></div>
-    </div>
-  </div>
-</section>
-
-<section id="faq" style="padding-top:24px">
-  <div class="wrap">
-    <div class="eyebrow">Questions</div>
-    <h2>Good to know.</h2>
-    <details><summary>Is this made by WhatsApp?</summary><p>No. It's an unofficial, independent tool, not made by or affiliated with WhatsApp or Meta. It links to your account as a linked device, the same way WhatsApp Web does. Unofficial clients are against WhatsApp's terms of service. Read-only use like this is low risk, but not zero.</p></details>
-    <details><summary>Will it export everything I've ever sent?</summary><p>It exports what your phone still has. Deleted messages, media you've cleared, or history lost in a reinstall without a backup can't be recovered. Older photos have to be re-sent by your phone, so they take longer, and anything the phone no longer has is listed in the report.</p></details>
-    <details><summary>What if it stops partway?</summary><p>Paste the same line again and choose to continue. It remembers what it was doing and picks up where it left off. If your phone locks, it pauses and carries on by itself when you open WhatsApp again.</p></details>
-    <details><summary>Is redaction perfect?</summary><p>It's careful but not perfect. It combines local checks with several AI passes and a strict final check, but you should still look over the redacted copy before sharing it. Videos aren't checked and are copied as they are.</p></details>
-    <details><summary>Do I need an API key?</summary><p>Only for AI redaction. Create one at platform.claude.com under Settings, then API keys, and paste it when asked. Without a key, redaction uses local checks only, which miss more. Voice-note transcripts need a separate Deepgram key, also optional.</p></details>
-    <details><summary>How do I remove it from my phone afterwards?</summary><p>It unlinks itself when it finishes. To double-check, open Settings → Linked Devices on your phone and make sure WhatsApp Exporter isn't listed.</p></details>
-    <div class="honest reveal" style="margin-top:26px"><p><b style="color:var(--ink)">Free and open source.</b> The full code is on <a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> under the GPL-3.0 licence, so anyone can read exactly what it does.</p></div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <span>WhatsApp Exporter · unofficial, not affiliated with WhatsApp or Meta</span>
-    <span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · <a href="#get">Download</a></span>
-  </div>
-</footer>
-
-<div class="toast" id="toast">Copied. Now paste it and press Enter.</div>
-
+  <h2>Good to know</h2>
+  <ul>
+    <li>One folder per chat with its messages and media, plus a spreadsheet of all chats.</li>
+    <li>Redaction swaps details for tags, like <span class="tag">{{PATIENT_FIRST_NAME}}</span>. It uses Claude with your own Anthropic API key (about $1 per 10 busy chats). Check the result before sharing.</li>
+    <li>Everything stays on your computer, except chat text sent to Claude when you redact.</li>
+    <li>It links like WhatsApp Web and unlinks itself when done. Unofficial clients are against WhatsApp's terms; read-only use is low risk, but not zero.</li>
+  </ul>
+</main>
+<footer>WhatsApp Exporter · <a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</footer>
 <script>
-(function () {
-  var tabs = document.querySelectorAll('.tabs button');
-  function show(os) {
-    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.os === os)); });
-    ['mac', 'win'].forEach(function (k) {
-      document.getElementById('cmd-' + k).hidden = k !== os;
-      document.getElementById('howto-' + k).hidden = k !== os;
-    });
-  }
-  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.os); }); });
-  var ua = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || '';
-  if (/win/i.test(ua)) {
-    show('win');
-    document.getElementById('heroGet').textContent = 'Get it for Windows';
-  } else if (/mac/i.test(ua)) {
-    document.getElementById('heroGet').textContent = 'Get it for Mac';
-  }
-  var toast = document.getElementById('toast');
-  document.querySelectorAll('.copy').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var text = document.getElementById(b.dataset.copy).textContent;
-      var done = function () {
-        b.textContent = 'Copied';
-        toast.classList.add('show');
-        setTimeout(function () { b.textContent = 'Copy'; toast.classList.remove('show'); }, 1800);
-      };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(done, function () { fallback(text); done(); });
-      } else { fallback(text); done(); }
+document.querySelectorAll('.tabs button').forEach(function (b) {
+  b.addEventListener('click', function () { show(b.dataset.os); });
+});
+function show(os) {
+  document.querySelectorAll('.tabs button').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.os === os)); });
+  document.getElementById('mac').hidden = os !== 'mac';
+  document.getElementById('win').hidden = os !== 'win';
+}
+if (/win/i.test(navigator.platform || navigator.userAgent)) show('win');
+document.querySelectorAll('.copy').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var text = document.getElementById(b.dataset.copy).textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      b.textContent = 'Copied';
+      setTimeout(function () { b.textContent = 'Copy'; }, 1500);
     });
   });
-  function fallback(text) {
-    var t = document.createElement('textarea');
-    t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
-    document.body.appendChild(t); t.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(t);
-  }
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
-  } else {
-    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
-  }
-})();
+});
 </script>
 </body>
 </html>
