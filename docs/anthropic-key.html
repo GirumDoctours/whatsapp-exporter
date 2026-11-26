@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get an Anthropic Key</title>
+<meta name="description" content="Step by step, with pictures: create an Anthropic API key so WhatsApp Exporter can redact personal details in your chats.">
+<meta property="og:title" content="Get an Anthropic API key for WhatsApp Exporter">
+<meta property="og:description" content="Five minutes, step by step, with pictures.">
+<meta property="og:image" content="https://girumdoctours.github.io/whatsapp-exporter/og.png">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="guide.css">
+<script>document.documentElement.classList.add(/Win/i.test(navigator.userAgent) ? 'win' : 'mac')</script>
+</head>
+<body>
+<nav>
+  <a class="mark" href="./">whatsapp exporter</a>
+  <a class="pill" href="deepgram-key.html">Deepgram key guide</a>
+</nav>
+
+<main class="wrap">
+  <header>
+    <div class="label">Anthropic API key</div>
+    <h1>Get your Anthropic key in five minutes.</h1>
+    <p class="sub">WhatsApp Exporter uses Claude, Anthropic's AI, to find names and other personal details in your chats. It needs a key, which is like a password that lets it use your Anthropic account.</p>
+    <div class="facts">
+      <span><b>About 5 minutes</b></span>
+      <span>You pay only for what you use</span>
+      <span>About <b>$1 per 10 busy chats</b></span>
+    </div>
+  </header>
+
+  <ol class="steps">
+    <li>
+      <h2>Open the Claude Console and sign in</h2>
+      <p>Keep the WhatsApp Exporter window open. Click the button below. It opens in a new tab.</p>
+      <a class="go" href="https://platform.claude.com/" target="_blank" rel="noopener">Open platform.claude.com ↗</a>
+      <p>If you don't have an account yet, click <span class="click">Continue with Google</span> or type your email and follow the steps. It's free to sign up.</p>
+    </li>
+
+    <li>
+      <h2>Add some credit</h2>
+      <p>The key only works once your account has credit. Open the Billing page, then click <span class="click">Buy credits</span>.</p>
+      <a class="go" href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Open Billing ↗</a>
+      <figure class="shot">
+        <img src="img/anthropic-billing.webp" width="1024" height="352" alt="The Billing page in the Claude Console, with the Buy credits button highlighted" loading="lazy">
+        <figcaption>Billing page. Your balance is shown where it's blurred here.</figcaption>
+      </figure>
+      <p>Pick the smallest amount offered. It's plenty for most exports, and you can see what you've used on the same page.</p>
+      <div class="note">If the page says <b>Auto-reload is on</b> and you only want to pay once, click <span class="click">Manage auto-reload</span> and turn it off. Then you're never charged more than you added.</div>
+    </li>
+
+    <li>
+      <h2>Open API keys and click Create key</h2>
+      <a class="go" href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Open API keys ↗</a>
+      <p>Click <span class="click">+ Create key</span> at the top right.</p>
+      <figure class="shot">
+        <img src="img/anthropic-keys.webp" width="1024" height="250" alt="The API keys page in the Claude Console, with the Create key button highlighted" loading="lazy">
+        <figcaption>API keys page. If you have no keys yet, the list is empty.</figcaption>
+      </figure>
+    </li>
+
+    <li>
+      <h2>Choose “Somewhere else”</h2>
+      <p>A box asks <b>Where does your code run?</b> Click the last card, <span class="click">Somewhere else</span>. It's the one that says “Use an API key”.</p>
+      <figure class="shot">
+        <img src="img/anthropic-chooser.webp" width="620" height="577" alt="The Connect to the Claude API box, with the Somewhere else card highlighted" loading="lazy">
+        <figcaption>The other cards don't give you a key, so skip them.</figcaption>
+      </figure>
+    </li>
+
+    <li>
+      <h2>Name it and click Create key</h2>
+      <p>Type <b>WhatsApp Exporter</b> as the name, so you'll know what it's for later. Leave the other settings as they are, then click <span class="click">Create key</span>.</p>
+      <figure class="shot">
+        <img src="img/anthropic-create.webp" width="620" height="560" alt="The Create API key box with WhatsApp Exporter typed as the name and the Create key button highlighted" loading="lazy">
+        <figcaption>The Create API key box</figcaption>
+      </figure>
+      <div class="note">The key stops working after <b>30 days</b>, which is plenty for an export. If you'll use it again later, choose a longer time under <b>Expires</b>.</div>
+    </li>
+
+    <li>
+      <h2>Copy the key</h2>
+      <p>Your new key appears, starting with <span class="kbd">sk-ant-</span>. Click <span class="click">Copy</span>.</p>
+      <figure class="shot">
+        <div class="browser">
+          <div class="top"><i></i><i></i><i></i><div class="url">platform.claude.com/settings/keys</div></div>
+          <div class="screen full">
+            <div class="main" style="min-height:240px">
+              <div class="bar w60"></div><div class="bar w80"></div><div class="bar w40"></div>
+              <div class="modal-bg">
+                <div class="modal">
+                  <h4>Your new API key</h4>
+                  <div class="small">You won't be able to see it again.</div>
+                  <div class="field secret">sk-ant-••••••••••••••••••••••••••••</div>
+                  <div class="acts"><span class="point"><svg class="arrow" viewBox="0 0 56 28"><path d="M2 14h46M38 5l10 9-10 9"/></svg><span class="btn hit" data-n="1">Copy</span></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>The key is shown once. Copy it now.</figcaption>
+      </figure>
+      <div class="warn">The key is shown only once. If you close the box before copying it, just create another one.</div>
+    </li>
+
+    <li>
+      <h2>Paste it into WhatsApp Exporter</h2>
+      <p>Go back to the WhatsApp Exporter window. Paste with <span class="kbd os-mac">⌘ V</span><span class="kbd os-win">Ctrl V</span>, then press <span class="kbd">Enter</span>.</p>
+      <figure class="shot">
+        <div class="term">
+          <div class="top"><i></i><i></i><i></i></div>
+<pre><span class="b">Paste your Anthropic API key, or press Enter to skip:</span>
+  <span class="ok">✔</span> API key works</pre>
+        </div>
+        <figcaption>When you see “API key works”, you're done.</figcaption>
+      </figure>
+      <div class="note">Nothing appears while you paste. That's normal: the key stays hidden on screen. Paste once and press Enter.</div>
+    </li>
+  </ol>
+
+  <section class="help">
+    <h2>If something goes wrong</h2>
+    <details>
+      <summary>It says “That key didn't work”</summary>
+      <p>Copy the key again with the Copy button rather than selecting it by hand, so no part is missed. Then paste it once and press Enter. If it still fails, create a new key and try that one.</p>
+    </details>
+    <details>
+      <summary>My key worked before but doesn't now</summary>
+      <p>Keys stop working when they expire, which is after 30 days unless you chose longer. Create a new one the same way. Also check that you still have credit.</p>
+    </details>
+    <details>
+      <summary>It says “Couldn't reach Claude just now”</summary>
+      <p>Check your internet connection. Also check that your account has credit on the <a href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Billing page</a>. The exporter tries again during the export.</p>
+    </details>
+    <details>
+      <summary>I closed the box before copying the key</summary>
+      <p>Click Create key again and make a new one. You can delete the old one from the API keys list with the ⋯ menu next to it.</p>
+    </details>
+    <details>
+      <summary>Is my key safe?</summary>
+      <p>Treat it like a password and don't share it. WhatsApp Exporter uses it only while it runs and doesn't save it. You can delete the key on the API keys page at any time, and it stops working straight away.</p>
+    </details>
+    <details>
+      <summary>Do I need this?</summary>
+      <p>Only if you choose to redact. Without a key, press Enter to skip and the exporter uses checks on your computer only. These miss more personal details.</p>
+    </details>
+  </section>
+
+  <div class="other">
+    <a href="./">← Back to WhatsApp Exporter</a>
+    <a href="deepgram-key.html">Also want voice notes as text? Get a Deepgram key →</a>
+  </div>
+</main>
+
+<footer><span>whatsapp exporter</span><span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</span></footer>
+</body>
+</html>

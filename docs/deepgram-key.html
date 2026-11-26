@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get a Deepgram Key</title>
+<meta name="description" content="Step by step, with pictures: create a Deepgram API key so WhatsApp Exporter can turn voice notes into text.">
+<meta property="og:title" content="Get a Deepgram API key for WhatsApp Exporter">
+<meta property="og:description" content="Three minutes, step by step, with pictures.">
+<meta property="og:image" content="https://girumdoctours.github.io/whatsapp-exporter/og.png">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="guide.css">
+<script>document.documentElement.classList.add(/Win/i.test(navigator.userAgent) ? 'win' : 'mac')</script>
+</head>
+<body>
+<nav>
+  <a class="mark" href="./">whatsapp exporter</a>
+  <a class="pill" href="anthropic-key.html">Anthropic key guide</a>
+</nav>
+
+<main class="wrap">
+  <header>
+    <div class="label">Deepgram API key</div>
+    <h1>Get your Deepgram key in three minutes.</h1>
+    <p class="sub">WhatsApp Exporter can turn voice notes into text with Deepgram, a speech-to-text service. It needs a key, which is like a password that lets it use your Deepgram account.</p>
+    <div class="facts">
+      <span><b>About 3 minutes</b></span>
+      <span>New accounts get <b>$200 free credit</b></span>
+      <span>Then about <b>26¢ per hour</b> of audio</span>
+    </div>
+  </header>
+
+  <ol class="steps">
+    <li>
+      <h2>Open Deepgram and sign up</h2>
+      <p>Keep the WhatsApp Exporter window open. Click the button below. It opens in a new tab.</p>
+      <a class="go" href="https://console.deepgram.com/" target="_blank" rel="noopener">Open console.deepgram.com ↗</a>
+      <p>Sign up with Google or your email. New accounts get <b>$200 of free credit</b>, which covers hundreds of hours of voice notes. If you already have an account, click <span class="click">Log in</span> instead.</p>
+    </li>
+
+    <li>
+      <h2>Go to API keys</h2>
+      <p>In the menu on the left, under <b>Manage</b>, click <span class="click">API keys</span>. Then click <span class="click">Create a new API key</span>.</p>
+      <figure class="shot">
+        <img src="img/deepgram-keys.webp" width="1000" height="470" alt="The API keys page in the Deepgram console, with API keys in the menu and the Create a new API key button highlighted" loading="lazy">
+        <figcaption>The API keys page. The Create API key button on the Dashboard opens the same box.</figcaption>
+      </figure>
+    </li>
+
+    <li>
+      <h2>Name it and click Create key</h2>
+      <p>A box called <b>Create an API key</b> opens. Type <b>WhatsApp Exporter</b> under <b>Friendly name</b>. Leave expiration on <b>Never</b> and don't open <b>Advanced</b>. Scroll down in the box and click <span class="click">Create key</span>.</p>
+      <figure class="shot">
+        <img src="img/deepgram-create.webp" width="640" height="610" alt="The Create an API key box with WhatsApp Exporter typed as the name and the Create key button highlighted" loading="lazy">
+        <figcaption>The Create key button is at the bottom of the box.</figcaption>
+      </figure>
+    </li>
+
+    <li>
+      <h2>Copy the key</h2>
+      <p>Your new key appears. Click <span class="click">Copy</span> next to it.</p>
+      <figure class="shot" data-shot="img/deepgram-copy.webp">
+        <div class="browser">
+          <div class="top"><i></i><i></i><i></i><div class="url">console.deepgram.com</div></div>
+          <div class="screen full">
+            <div class="main" style="min-height:230px">
+              <div class="bar w60"></div><div class="bar w80"></div><div class="bar w40"></div>
+              <div class="modal-bg">
+                <div class="modal">
+                  <h4>Your new API key</h4>
+                  <div class="small">Copy it now. You won't see it again.</div>
+                  <div class="field secret">••••••••••••••••••••••••••••••••</div>
+                  <div class="acts"><span class="point"><svg class="arrow" viewBox="0 0 56 28"><path d="M2 14h46M38 5l10 9-10 9"/></svg><span class="btn hit" data-n="1">Copy</span></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>The key is shown once. Copy it now.</figcaption>
+      </figure>
+      <div class="warn">The key is shown only once. If you close the box before copying it, just create another one.</div>
+    </li>
+
+    <li>
+      <h2>Paste it into WhatsApp Exporter</h2>
+      <p>Go back to the WhatsApp Exporter window. Paste with <span class="kbd os-mac">⌘ V</span><span class="kbd os-win">Ctrl V</span>, then press <span class="kbd">Enter</span>.</p>
+      <figure class="shot">
+        <div class="term">
+          <div class="top"><i></i><i></i><i></i></div>
+<pre><span class="b">Paste your Deepgram API key, or press Enter to skip voice notes:</span>
+  <span class="ok">✔</span> Deepgram key works</pre>
+        </div>
+        <figcaption>When you see “Deepgram key works”, you're done.</figcaption>
+      </figure>
+      <div class="note">Nothing appears while you paste. That's normal: the key stays hidden on screen. Paste once and press Enter.</div>
+    </li>
+  </ol>
+
+  <section class="help">
+    <h2>If something goes wrong</h2>
+    <details>
+      <summary>It says “That Deepgram key didn't work”</summary>
+      <p>Copy the key again with the Copy button rather than selecting it by hand, so no part is missed. Then paste it once and press Enter. If it still fails, create a new key and try that one.</p>
+    </details>
+    <details>
+      <summary>It says “Couldn't reach Deepgram just now”</summary>
+      <p>Check your internet connection. The exporter tries again during the export.</p>
+    </details>
+    <details>
+      <summary>I closed the box before copying the key</summary>
+      <p>Click Create a new API key again and make a new one. You can delete the old one from the list on the API keys page.</p>
+    </details>
+    <details>
+      <summary>Is my key safe?</summary>
+      <p>Treat it like a password and don't share it. WhatsApp Exporter uses it only while it runs and doesn't save it. You can delete the key on the API keys page at any time, and it stops working straight away.</p>
+    </details>
+    <details>
+      <summary>Do I need this?</summary>
+      <p>No. It's only for turning voice notes into text. Press Enter to skip, and voice notes are saved without a written version. In a redacted copy they're removed.</p>
+    </details>
+  </section>
+
+  <div class="other">
+    <a href="./">← Back to WhatsApp Exporter</a>
+    <a href="anthropic-key.html">Need an Anthropic key too? →</a>
+  </div>
+</main>
+
+<footer><span>whatsapp exporter</span><span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</span></footer>
+</body>
+</html>

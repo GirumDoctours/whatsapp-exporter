@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	pasteKeys       = "⌘V"
 	fileManagerName = "Finder"
 	zoomOutKeys     = "⌘ and the minus key"
 )
@@ -51,6 +52,10 @@ const closeWindowScript = `on run argv
 		end repeat
 	end tell
 end run`
+
+func openURL(url string) error {
+	return exec.Command("/usr/bin/open", url).Start()
+}
 
 func revealFile(path string) {
 	if path == "" {

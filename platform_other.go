@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	pasteKeys       = "Ctrl+Shift+V"
 	fileManagerName = "your file manager"
 	zoomOutKeys     = "Ctrl and the minus key"
 )
@@ -35,6 +36,10 @@ func plainConsole() bool {
 
 func growWindow(t *terminal, rows, cols int) {
 	t.control(fmt.Sprintf("\033[8;%d;%dt", rows, cols))
+}
+
+func openURL(url string) error {
+	return exec.Command("xdg-open", url).Start()
 }
 
 func revealFile(path string) {
