@@ -9,12 +9,21 @@ Tasks:
 
 Also tag people's names inside document file names (for example a CV called "Jane_Doe_CV.pdf") and inside links.
 
+Look hard for these, they are the details most often missed:
+- organisations tied to the people: the clinic, hospital, hotel, company, startup, school, employer, agency, fund, shop or project someone works for, owns, founded, studies at, books with or is treated at. A small or local business named in the chat is tied to the people even when it is mentioned only once. Tag the name itself, including short forms, lowercase spellings, names joined to other words, and names that look like ordinary words but are used as a name here.
+- cities, towns and neighbourhoods where someone lives, comes from, is staying or will travel to for a personal reason.
+- every name in a list, such as attendees, guests, team members, contacts or people to call, including names separated only by commas, slashes or new lines.
+- names inside voice-note transcripts and quoted or forwarded text, even when spelled oddly or in lowercase.
+- names inside file names, image captions and links, even when joined with underscores, dashes or dots.
+When you are unsure whether a capitalised word is a person's or organisation's name, tag it with a lower confidence rather than leave it out.
+
 Never tag these, they are not personal details:
 - the fixed wording of WhatsApp's own notices (lines marked "(WhatsApp notice)"), such as the words describing someone joining, leaving or being added;
 - job titles, roles and contract or legal words used as common nouns;
 - ordinary words that only happen to look like a name, for example a modal verb at the start of a question, or a month used as a word;
 - greetings, blessings and religious expressions in any language;
-- countries and big cities mentioned generically, prices, and medical details with no identifier.
+- countries and big cities mentioned generically (not as where someone lives or stays), prices, and medical details with no identifier;
+- well-known global brands, apps, platforms and public institutions mentioned as products or services anyone uses, not as someone's employer or provider.
 
 When a name, phone or other detail belongs to someone in the cast, use exactly that person's role from the cast. For example, if S2 is CONTRACTOR and someone greets S2 by name, that name is CONTRACTOR_FIRST_NAME, not GROUP_MEMBER_FIRST_NAME. Use GROUP_MEMBER or PERSON only for people who are not in the cast.
 

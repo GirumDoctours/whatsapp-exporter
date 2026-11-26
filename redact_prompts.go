@@ -13,6 +13,8 @@ var (
 	roleSystemPrompt string
 	//go:embed prompts/confirm.txt
 	confirmSystemPrompt string
+	//go:embed prompts/sweep.txt
+	sweepSystemPrompt string
 )
 
 type confirmDecision struct {
@@ -57,7 +59,7 @@ func roleSchema() map[string]any {
 	})
 }
 
-const promptVersion = "v5"
+const promptVersion = "v6"
 
 type castRole struct {
 	Ref        string  `json:"ref"`
@@ -101,6 +103,16 @@ type slotVerdict struct {
 	BetterTag  string  `json:"better_tag"`
 	IsPII      bool    `json:"is_pii"`
 	Confidence float64 `json:"confidence"`
+}
+
+type sweepReply struct {
+	Leaks []foundTag `json:"leaks"`
+}
+
+func sweepSchema() map[string]any {
+	return objectSchema(map[string]any{
+		"leaks": arrayOf(foundSchema()),
+	})
 }
 
 type pass2Reply struct {

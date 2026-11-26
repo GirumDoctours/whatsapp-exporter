@@ -176,6 +176,8 @@ func (r *redactor) redactChat(ctx context.Context, in chatInput) chatOutput {
 		j.propagate(ctx)
 		j.check(ctx)
 		j.propagate(ctx)
+		j.sweep(ctx)
+		j.propagate(ctx)
 		j.resolveRoles(ctx)
 	}
 	j.mergeAddresses()
@@ -191,6 +193,9 @@ func (r *redactor) redactChat(ctx context.Context, in chatInput) chatOutput {
 	}
 	j.slots = refined
 	j.dropWrongNames()
+	if j.aiUsed {
+		j.recheck(ctx, addedByFinalStep)
+	}
 	j.stats = base
 	final := j.finish()
 	if gap, missing := uncovered(out.Slots, final.Slots); missing {
@@ -1662,21 +1667,7 @@ func (j *chatJob) pass2(ctx context.Context, rg lineRange, canSplit bool) error 
 	var table strings.Builder
 	ids := map[string]int{}
 	var b strings.Builder
-	b.WriteString(j.chatKind() + "\n" + j.castTable() + "\nREDACTED CHUNK\n")
-	if rg.start == 0 && j.in.IsGroup {
-		fmt.Fprintf(&b, "#0 (group name): %s\n", j.previewLine(-1, j.titleLabel))
-	}
-	for i := rg.start; i < rg.end; i++ {
-		l := j.doc.Lines[i]
-		sender := "(system)"
-		if l.HasSender {
-			sender = firstNonEmpty(j.senderTagFor(l.Sender), j.senderDisplay(l))
-			if j.in.IsGroup && l.Sender == j.titleLabel {
-				sender = "(group)"
-			}
-		}
-		fmt.Fprintf(&b, "#%d %s: %s\n", i+1, sender, j.previewLine(i, l.Body))
-	}
+	b.WriteString(j.redactedChunk(rg))
 	for idx, s := range j.slots {
 		if (s.Line < rg.start || s.Line >= rg.end) && !(s.Line == -1 && rg.start == 0) {
 			continue
