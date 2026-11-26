@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	pasteKeys       = "Ctrl+V or right-click"
 	fileManagerName = "File Explorer"
 	zoomOutKeys     = "Ctrl and the minus key"
 	showMaximized   = 3
@@ -41,6 +42,10 @@ func growWindow(*terminal, int, int) {
 	if window != 0 {
 		_, _, _ = procShowWindow.Call(window, showMaximized)
 	}
+}
+
+func openURL(url string) error {
+	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 }
 
 func revealFile(path string) {
