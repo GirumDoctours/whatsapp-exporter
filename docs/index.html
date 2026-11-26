@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WhatsApp Exporter</title>
-<meta name="description" content="Save every WhatsApp chat, photo and file into one ZIP on your computer. Hide personal details so you can share it freely. Open source, local, your own keys.">
+<meta name="description" content="Export every WhatsApp chat, photo and file to one ZIP on your Mac or Windows PC, with optional PII redaction. Open source, local, your own API keys.">
 <meta property="og:title" content="WhatsApp Exporter">
-<meta property="og:description" content="Every chat in one ZIP on your computer. Redact it and share it freely. Open source and local.">
+<meta property="og:description" content="Export every WhatsApp chat to one ZIP, with optional PII redaction. Open source and local.">
 <meta property="og:image" content="https://girumdoctours.github.io/whatsapp-exporter/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="light">
@@ -88,30 +88,46 @@ section{padding:120px 0}
 .num{font-size:12px;color:var(--faint);margin:0 6px}
 .mini{font-size:11px;line-height:1.55;background:#1d1b1a;color:#ece8e2;border-radius:10px;padding:10px 12px;width:86%}
 .phone{width:92px;height:132px;border-radius:18px;background:#fff;box-shadow:0 10px 30px -14px rgba(70,50,30,.45);display:grid;place-items:center;transform:translateY(16px)}
-.qr{width:58px;height:58px;background:conic-gradient(from 90deg at 2px 2px,#14110f 90deg,transparent 0) 0 0/8px 8px,var(--paper);border-radius:6px;opacity:.85}
+.qr{width:70px;height:70px;display:block}
 .files{font-size:12px;line-height:1.9;color:var(--ink);text-align:left}
 .files div{padding-left:14px}.files .top{padding-left:0;font-weight:600}
-.end{text-align:center;padding:90px 0 60px}
-.end .ctas{justify-content:center}
 footer{padding:28px 32px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--faint)}
 footer a{color:var(--faint)}
 .js .rise{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
 .js .rise.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.js .rise{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
 @media (max-width:920px){
-  .hero,.row{grid-template-columns:1fr;gap:40px}
-  .row.flip .text{order:0}
-  section{padding:80px 0}
-  .steps{grid-template-columns:1fr}
+  .hero,.row{grid-template-columns:1fr;gap:36px}
+  .row .text,.row.flip .text{order:-1}
+  section{padding:72px 0}
+  .steps{grid-template-columns:1fr;margin-top:32px}
 }
 @media (max-width:560px){
-  .wrap{padding:0 18px}
-  nav{padding:14px 18px}
+  html,body{overflow-x:clip}
+  .wrap{padding:0 24px}
+  nav{padding:12px 24px}
+  .pill{height:38px;padding:0 16px;font-size:14px}
   .pills .pill:not(.green){display:none}
-  header{padding-top:90px;min-height:auto}
+  header{min-height:auto;padding:88px 0 48px}
+  h1{font-size:34px;line-height:1.06}
+  h2{font-size:30px;line-height:1.06}
+  .sub{font-size:16px;margin-top:14px}
+  .text p{font-size:16px}
+  section{padding:56px 0}
+  .hero,.row{gap:28px}
+  .tray{border-radius:24px;padding:10px}
+  .card{border-radius:16px}
+  .grid{grid-template-columns:1fr 1fr;gap:8px}
+  .fact{padding:14px}
+  .fact span{font-size:13px}
+  .term pre{font-size:11.5px;padding:14px 14px 16px}
+  .line code{font-size:12px}
+  .chat{padding:14px}
+  .bubble{font-size:14px}
+  .step .shot{height:130px}
+}
+@media (max-width:380px){
   .grid{grid-template-columns:1fr}
-  .term pre{font-size:11.5px}
-  .sub{font-size:18px}
 }
 </style>
 <script>document.documentElement.classList.add('js')</script>
@@ -128,8 +144,8 @@ footer a{color:var(--faint)}
 <header id="top">
   <div class="wrap hero">
     <div>
-      <h1>Your whole WhatsApp,<br>in one ZIP.</h1>
-      <p class="sub">Every chat, photo and voice note, saved to your computer in one go. Hide the personal bits and share it with anyone.</p>
+      <h1>Export every WhatsApp chat to one ZIP.</h1>
+      <p class="sub">Chats, photos, voice notes and files, saved on your Mac or Windows PC. Optional PII redaction.</p>
       <div class="get" id="get">
         <div class="seg" role="tablist">
           <button role="tab" aria-selected="true" data-os="mac">Mac</button>
@@ -147,21 +163,21 @@ footer a{color:var(--faint)}
 <pre><span class="b">WhatsApp Exporter</span>
 
 <span class="d">What would you like to do?</span>
-<span class="ok">✔</span> Run a quick test <span class="d">· your 10 latest chats</span>
+<span class="ok">✔</span> Export everything
 
-<span class="d">What should the ZIP contain?</span>
-<span class="ok">✔</span> Redact PII, then zip
+<span class="d">What should it download?</span>
+<span class="ok">✔</span> Messages and media
 
 <span class="ok">✔</span> Linked to your phone
-<span class="ok">✔</span> Downloading messages      <span class="d">48 sec</span>
-<span class="ok">✔</span> Checking personal details <span class="d">2 min</span>
-<span class="ok">✔</span> Saving the redacted ZIP
+<span class="ok">✔</span> Downloading messages <span class="d">9 min</span>
+<span class="ok">✔</span> Downloading media    <span class="d">31 min</span>
+<span class="ok">✔</span> Creating the ZIP     <span class="d">2 min</span>
 
-  Chats      <span class="g">10</span>
-  Messages   <span class="g">6,900</span>
-  Photos     <span class="g">319</span>
+  Chats      <span class="g">10,123</span>
+  Messages   <span class="g">1,482,906</span>
+  Media      <span class="g">38,417</span>
 
-<span class="d">Saved in</span>  ~/Desktop/WhatsApp-11-26-redacted.zip</pre>
+<span class="d">Saved in</span>  ~/Desktop/15551234567-11-26.zip</pre>
       </div>
     </div>
   </div>
@@ -179,13 +195,13 @@ footer a{color:var(--faint)}
       </div>
     </div>
     <div class="text">
-      <div class="label">Share it freely</div>
-      <h2>Keep the conversation.<br>Lose the people.</h2>
-      <p>Choose redaction and every personal detail becomes a clear tag. The chat still reads naturally, so you can share it with a colleague, a researcher or an AI without giving anyone away.</p>
+      <div class="label">Redaction</div>
+      <h2>Redact PII without losing context.</h2>
+      <p>Personal details become tags. The rest of each message stays exactly as written, so the redacted chats can be shared or analysed.</p>
       <ul class="bul">
         <li>Names, numbers, emails, addresses, ages, IDs and bank details</li>
         <li>ID photos replaced, text in screenshots blacked out</li>
-        <li>The same person keeps the same tag all the way through</li>
+        <li>Each person keeps the same tag throughout a chat</li>
       </ul>
     </div>
   </div>
@@ -196,18 +212,18 @@ footer a{color:var(--faint)}
     <div class="tray rise">
       <div class="grid">
         <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><b>Local</b><span>Runs on your computer. The ZIP never leaves it.</span></div>
-        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div><b>Open source</b><span>Every line is on GitHub under GPL-3.0.</span></div>
-        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/></svg></div><b>Your own keys</b><span>AI redaction uses your Anthropic key. No account with us.</span></div>
-        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><b>Hidden first</b><span>Known names and numbers are masked before anything goes to the AI.</span></div>
-        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div><b>Leaves no trace</b><span>Unlinks from your phone and deletes its working files when done.</span></div>
-        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></div><b>Free</b><span>Exporting costs nothing. Redaction is about $1 per 10 busy chats.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div><b>Open source</b><span>All code on GitHub, GPL-3.0.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/></svg></div><b>Your own keys</b><span>Redaction uses your Anthropic API key.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><b>Hidden first</b><span>Known names and numbers are masked before any text is sent.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div><b>Cleans up</b><span>Unlinks your phone and deletes its working files.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></div><b>Free</b><span>Export is free. Redaction costs about $1 per 10 busy chats.</span></div>
       </div>
     </div>
     <div class="text">
-      <div class="label">Private by design</div>
-      <h2>Yours, start<br>to finish.</h2>
-      <p>No servers of ours, no sign-up, nothing kept by us. You can read the code, run it yourself and bring your own AI key. When you redact, only chat text with known details already hidden goes to Anthropic. When it's done, the only thing left is your ZIP.</p>
-      <p style="font-size:14px;color:var(--faint)">Unofficial and not affiliated with WhatsApp or Meta. It links like WhatsApp Web, which is against WhatsApp's terms; read-only use is low risk, but not zero.</p>
+      <div class="label">Privacy</div>
+      <h2>Open source. Local.<br>Your own keys.</h2>
+      <p>Runs on your computer with no servers and no account. Redaction uses your own Anthropic API key, and only chat text with known details already hidden is sent. The code is public under GPL-3.0.</p>
+      <p style="font-size:14px;color:var(--faint)">It links as a device, like WhatsApp Web. Third-party clients are against WhatsApp's terms.</p>
     </div>
   </div>
 </section>
@@ -215,29 +231,25 @@ footer a{color:var(--faint)}
 <section id="how">
   <div class="wrap">
     <div class="label">How it works</div>
-    <h2>Three steps.<br>About three minutes.</h2>
+    <h2>Three steps.</h2>
     <div class="steps">
       <div class="tray step rise">
         <div class="shot"><div class="mini mono"><span class="d">~ %</span> /bin/bash -c "$(curl -fsSL …/install.sh)"<br><span class="ok">✔</span> Downloading WhatsApp Exporter</div></div>
-        <div class="num">01</div><h3>Paste one line</h3><p>Copy it from the top of this page into Terminal or PowerShell.</p>
+        <div class="num">01</div><h3>Paste one line</h3><p>Copy the command above into Terminal or PowerShell.</p>
       </div>
       <div class="tray step rise">
-        <div class="shot"><div class="phone"><div class="qr"></div></div></div>
-        <div class="num">02</div><h3>Scan the code</h3><p>Settings → Linked Devices on your phone, like WhatsApp Web.</p>
+        <div class="shot"><div class="phone"><svg class="qr" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code that opens this website" viewBox="-2 -2 37 37" shape-rendering="crispEdges"><rect x="-2" y="-2" width="37" height="37" fill="#fff"/><path fill="#14110f" d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM12 0h1v1h-1zM13 0h1v1h-1zM14 0h1v1h-1zM15 0h1v1h-1zM17 0h1v1h-1zM18 0h1v1h-1zM19 0h1v1h-1zM20 0h1v1h-1zM21 0h1v1h-1zM22 0h1v1h-1zM23 0h1v1h-1zM26 0h1v1h-1zM27 0h1v1h-1zM28 0h1v1h-1zM29 0h1v1h-1zM30 0h1v1h-1zM31 0h1v1h-1zM32 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h1v1h-1zM9 1h1v1h-1zM10 1h1v1h-1zM11 1h1v1h-1zM14 1h1v1h-1zM15 1h1v1h-1zM18 1h1v1h-1zM19 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM23 1h1v1h-1zM24 1h1v1h-1zM26 1h1v1h-1zM32 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM9 2h1v1h-1zM13 2h1v1h-1zM14 2h1v1h-1zM15 2h1v1h-1zM17 2h1v1h-1zM18 2h1v1h-1zM19 2h1v1h-1zM20 2h1v1h-1zM26 2h1v1h-1zM28 2h1v1h-1zM29 2h1v1h-1zM30 2h1v1h-1zM32 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM13 3h1v1h-1zM14 3h1v1h-1zM16 3h1v1h-1zM17 3h1v1h-1zM18 3h1v1h-1zM19 3h1v1h-1zM20 3h1v1h-1zM22 3h1v1h-1zM26 3h1v1h-1zM28 3h1v1h-1zM29 3h1v1h-1zM30 3h1v1h-1zM32 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM18 4h1v1h-1zM20 4h1v1h-1zM23 4h1v1h-1zM26 4h1v1h-1zM28 4h1v1h-1zM29 4h1v1h-1zM30 4h1v1h-1zM32 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM13 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM18 5h1v1h-1zM19 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM22 5h1v1h-1zM23 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM29 6h1v1h-1zM30 6h1v1h-1zM31 6h1v1h-1zM32 6h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1zM14 7h1v1h-1zM15 7h1v1h-1zM17 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM23 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM10 8h1v1h-1zM11 8h1v1h-1zM13 8h1v1h-1zM16 8h1v1h-1zM17 8h1v1h-1zM21 8h1v1h-1zM24 8h1v1h-1zM28 8h1v1h-1zM31 8h1v1h-1zM0 9h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM8 9h1v1h-1zM11 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM17 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM24 9h1v1h-1zM25 9h1v1h-1zM26 9h1v1h-1zM27 9h1v1h-1zM31 9h1v1h-1zM32 9h1v1h-1zM0 10h1v1h-1zM3 10h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM9 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM26 10h1v1h-1zM27 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM0 11h1v1h-1zM5 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1zM11 11h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM14 11h1v1h-1zM17 11h1v1h-1zM18 11h1v1h-1zM21 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM28 11h1v1h-1zM32 11h1v1h-1zM0 12h1v1h-1zM1 12h1v1h-1zM2 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1zM8 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM16 12h1v1h-1zM18 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM3 13h1v1h-1zM5 13h1v1h-1zM7 13h1v1h-1zM8 13h1v1h-1zM9 13h1v1h-1zM14 13h1v1h-1zM15 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM24 13h1v1h-1zM26 13h1v1h-1zM29 13h1v1h-1zM30 13h1v1h-1zM32 13h1v1h-1zM0 14h1v1h-1zM2 14h1v1h-1zM5 14h1v1h-1zM6 14h1v1h-1zM9 14h1v1h-1zM10 14h1v1h-1zM12 14h1v1h-1zM13 14h1v1h-1zM14 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM25 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM30 14h1v1h-1zM31 14h1v1h-1zM32 14h1v1h-1zM0 15h1v1h-1zM2 15h1v1h-1zM3 15h1v1h-1zM5 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM17 15h1v1h-1zM18 15h1v1h-1zM20 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM26 15h1v1h-1zM27 15h1v1h-1zM31 15h1v1h-1zM1 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM19 16h1v1h-1zM21 16h1v1h-1zM23 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM5 17h1v1h-1zM7 17h1v1h-1zM8 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM16 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM24 17h1v1h-1zM25 17h1v1h-1zM26 17h1v1h-1zM27 17h1v1h-1zM32 17h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM7 18h1v1h-1zM8 18h1v1h-1zM9 18h1v1h-1zM11 18h1v1h-1zM17 18h1v1h-1zM24 18h1v1h-1zM26 18h1v1h-1zM30 18h1v1h-1zM31 18h1v1h-1zM32 18h1v1h-1zM0 19h1v1h-1zM1 19h1v1h-1zM2 19h1v1h-1zM3 19h1v1h-1zM4 19h1v1h-1zM7 19h1v1h-1zM8 19h1v1h-1zM9 19h1v1h-1zM10 19h1v1h-1zM12 19h1v1h-1zM15 19h1v1h-1zM16 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM21 19h1v1h-1zM25 19h1v1h-1zM27 19h1v1h-1zM28 19h1v1h-1zM32 19h1v1h-1zM1 20h1v1h-1zM3 20h1v1h-1zM4 20h1v1h-1zM5 20h1v1h-1zM6 20h1v1h-1zM8 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM26 20h1v1h-1zM29 20h1v1h-1zM31 20h1v1h-1zM2 21h1v1h-1zM3 21h1v1h-1zM8 21h1v1h-1zM13 21h1v1h-1zM14 21h1v1h-1zM15 21h1v1h-1zM19 21h1v1h-1zM21 21h1v1h-1zM24 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM29 21h1v1h-1zM31 21h1v1h-1zM32 21h1v1h-1zM0 22h1v1h-1zM2 22h1v1h-1zM4 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM11 22h1v1h-1zM14 22h1v1h-1zM18 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM30 22h1v1h-1zM31 22h1v1h-1zM32 22h1v1h-1zM1 23h1v1h-1zM2 23h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM8 23h1v1h-1zM9 23h1v1h-1zM11 23h1v1h-1zM12 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM17 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM23 23h1v1h-1zM24 23h1v1h-1zM26 23h1v1h-1zM27 23h1v1h-1zM31 23h1v1h-1zM32 23h1v1h-1zM0 24h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM6 24h1v1h-1zM10 24h1v1h-1zM17 24h1v1h-1zM19 24h1v1h-1zM21 24h1v1h-1zM24 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM27 24h1v1h-1zM28 24h1v1h-1zM29 24h1v1h-1zM32 24h1v1h-1zM8 25h1v1h-1zM9 25h1v1h-1zM10 25h1v1h-1zM12 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM24 25h1v1h-1zM28 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM32 25h1v1h-1zM0 26h1v1h-1zM1 26h1v1h-1zM2 26h1v1h-1zM3 26h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM6 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM12 26h1v1h-1zM16 26h1v1h-1zM18 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM30 26h1v1h-1zM32 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM11 27h1v1h-1zM15 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM24 27h1v1h-1zM28 27h1v1h-1zM32 27h1v1h-1zM0 28h1v1h-1zM2 28h1v1h-1zM3 28h1v1h-1zM4 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM9 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM15 28h1v1h-1zM16 28h1v1h-1zM18 28h1v1h-1zM19 28h1v1h-1zM20 28h1v1h-1zM21 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM26 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM31 28h1v1h-1zM0 29h1v1h-1zM2 29h1v1h-1zM3 29h1v1h-1zM4 29h1v1h-1zM6 29h1v1h-1zM9 29h1v1h-1zM10 29h1v1h-1zM11 29h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM15 29h1v1h-1zM16 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM0 30h1v1h-1zM2 30h1v1h-1zM3 30h1v1h-1zM4 30h1v1h-1zM6 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM11 30h1v1h-1zM12 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM20 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM0 31h1v1h-1zM6 31h1v1h-1zM9 31h1v1h-1zM12 31h1v1h-1zM13 31h1v1h-1zM14 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM21 31h1v1h-1zM23 31h1v1h-1zM24 31h1v1h-1zM26 31h1v1h-1zM28 31h1v1h-1zM31 31h1v1h-1zM0 32h1v1h-1zM1 32h1v1h-1zM2 32h1v1h-1zM3 32h1v1h-1zM4 32h1v1h-1zM5 32h1v1h-1zM6 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM14 32h1v1h-1zM15 32h1v1h-1zM16 32h1v1h-1zM17 32h1v1h-1zM20 32h1v1h-1zM21 32h1v1h-1zM23 32h1v1h-1zM24 32h1v1h-1zM25 32h1v1h-1zM26 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1z"/></svg></div></div>
+        <div class="num">02</div><h3>Scan the code</h3><p>On your phone: Settings → Linked Devices → Link a Device.</p>
       </div>
       <div class="tray step rise">
-        <div class="shot"><div class="files mono"><div class="top">📦 WhatsApp-11-26.zip</div><div>📁 Ada Example</div><div>📁 GP-Book club</div><div>📊 index.csv</div></div></div>
-        <div class="num">03</div><h3>Get your ZIP</h3><p>One folder per chat with its messages and media, on your Desktop.</p>
+        <div class="shot"><div class="files mono"><div class="top">📦 15551234567-11-26.zip</div><div>📁 Ada Example</div><div>📁 GP-Book club</div><div>📊 index.csv</div></div></div>
+        <div class="num">03</div><h3>Get your ZIP</h3><p>One folder per chat with its messages and media, saved to your Desktop.</p>
       </div>
     </div>
   </div>
 </section>
 
-<div class="end">
-  <h2>Take your chats with you.</h2>
-  <div class="ctas"><a class="pill green" href="#get">Get it for your computer</a><a class="pill" href="https://github.com/GirumDoctours/whatsapp-exporter">Read the code</a></div>
-</div>
-<footer><span>whatsapp exporter · unofficial · not affiliated with WhatsApp or Meta</span><span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</span></footer>
+<footer><span>whatsapp exporter</span><span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</span></footer>
 
 <script>
 (function () {
