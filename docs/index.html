@@ -4,94 +4,264 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WhatsApp Exporter</title>
-<meta name="description" content="Save every WhatsApp chat, photo and file into one ZIP on your Mac or Windows PC, with optional redaction of personal details. Free and open source.">
+<meta name="description" content="Save every WhatsApp chat, photo and file into one ZIP on your computer. Hide personal details so you can share it freely. Open source, local, your own keys.">
 <meta property="og:title" content="WhatsApp Exporter">
-<meta property="og:description" content="Every chat, photo and file in one ZIP on your computer. Free, open source, unofficial.">
+<meta property="og:description" content="Every chat in one ZIP on your computer. Redact it and share it freely. Open source and local.">
 <meta property="og:image" content="https://girumdoctours.github.io/whatsapp-exporter/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--green:#25d366;--dark:#128c7e;--ink:#111b21;--muted:#54656f;--line:#e2e8ea;--soft:#f0f2f5}
+:root{
+  --paper:#f4f1ec;--paper2:#efebe4;--ink:#14110f;--muted:rgba(20,17,15,.55);--faint:rgba(20,17,15,.42);
+  --green:#128c7e;--green-soft:#e3f1ec;--line:rgba(20,17,15,.08);
+  --tray:rgba(255,255,255,.55);--shadow:0 24px 60px -30px rgba(70,50,30,.35);
+}
 *{box-sizing:border-box}
-body{margin:0;background:#fff;color:var(--ink);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-main{max-width:720px;margin:0 auto;padding:56px 20px 40px}
-h1{font-size:clamp(32px,6vw,44px);line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
-h2{font-size:22px;margin:40px 0 12px}
-p{margin:0 0 14px}
-.lede{font-size:19px;color:var(--muted)}
-.small{font-size:14px;color:var(--muted)}
-a{color:var(--dark)}
-.tabs{display:flex;gap:8px;margin:20px 0 12px}
-.tabs button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);font:600 15px inherit;font-family:inherit;padding:8px 18px;border-radius:999px;cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
-.cmd{display:flex;gap:10px;align-items:flex-start;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px}
-.cmd code{flex:1;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
-.copy{flex:0 0 auto;background:var(--dark);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:600 14px inherit;font-family:inherit;cursor:pointer}
-ol,ul{margin:12px 0 0;padding-left:22px}
-li{margin-bottom:6px}
-.tag{font:13px ui-monospace,Menlo,monospace;background:#e7fce3;color:#0b6e4f;border-radius:5px;padding:1px 5px}
-footer{max-width:720px;margin:0 auto;padding:20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+nav{position:fixed;top:0;left:0;right:0;z-index:20;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;background:rgba(244,241,236,.72);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
+.mark{font-weight:500;font-size:17px;letter-spacing:-.01em;text-decoration:none}
+.pills{display:flex;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border-radius:99px;font-size:15px;font-weight:500;text-decoration:none;background:rgba(255,255,255,.62);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.85),0 8px 24px -12px rgba(70,50,30,.28);border:0;cursor:pointer;color:var(--ink)}
+.pill.solid{background:var(--ink);color:#fff;box-shadow:0 8px 24px -12px rgba(20,17,15,.6)}
+.pill.green{background:var(--green);color:#fff;box-shadow:0 8px 24px -12px rgba(18,140,126,.7)}
+h1,h2{font-weight:400;letter-spacing:-.035em;margin:0}
+h1{font-size:clamp(40px,5.2vw,60px);line-height:1.04}
+h2{font-size:clamp(34px,4.4vw,54px);line-height:1.05}
+.sub{font-size:20px;line-height:1.5;color:var(--faint);margin:20px 0 0;max-width:30em}
+.label{font-size:13px;font-weight:500;color:var(--green);letter-spacing:.02em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+.tray{background:var(--tray);border-radius:30px;padding:14px;box-shadow:var(--shadow);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),var(--shadow)}
+.card{background:#fff;border-radius:20px;box-shadow:0 1px 0 rgba(20,17,15,.04)}
+header{min-height:88vh;display:flex;align-items:center;padding:110px 0 60px}
+.hero{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center}
+.ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.get{margin-top:28px;max-width:470px}
+.seg{display:inline-flex;gap:4px;background:rgba(20,17,15,.05);border-radius:99px;padding:4px;margin-bottom:10px}
+.seg button{border:0;background:transparent;font:500 14px Inter,sans-serif;color:var(--muted);padding:6px 14px;border-radius:99px;cursor:pointer}
+.seg button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 8px -4px rgba(70,50,30,.35)}
+.line{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:10px 10px 10px 16px;box-shadow:inset 0 0 0 1px var(--line)}
+.line code{flex:1;font-size:12.5px;line-height:1.5;word-break:break-all;color:var(--ink)}
+.copy{flex:0 0 auto;border:0;background:var(--ink);color:#fff;font:500 13px Inter,sans-serif;padding:8px 14px;border-radius:10px;cursor:pointer}
+.fine{font-size:13px;color:var(--faint);margin-top:10px}
+.term{border-radius:18px;overflow:hidden;background:#1d1b1a;color:#ece8e2;box-shadow:0 30px 70px -30px rgba(40,25,10,.55)}
+.term .bar{display:flex;align-items:center;gap:7px;padding:12px 14px;background:#2a2725}
+.term .bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}
+.term .bar i:nth-child(2){background:#febc2e}.term .bar i:nth-child(3){background:#28c840}
+.term .bar span{flex:1;text-align:center;font-size:12px;color:#9d968d;margin-right:40px}
+.term pre{margin:0;padding:18px 20px 22px;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.d{color:#8f887f}.ok{color:#3ecf8e}.b{color:#fff;font-weight:600}.g{color:#7fd8c6}
+section{padding:120px 0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.row.flip .text{order:2}
+.text p{color:var(--muted);font-size:17px;margin:18px 0 0;max-width:28em}
+.bul{list-style:none;padding:0;margin:22px 0 0}
+.bul li{display:flex;gap:10px;margin:0 0 10px;color:var(--ink);font-size:16px}
+.bul li::before{content:"";flex:0 0 6px;height:6px;border-radius:50%;background:var(--green);margin-top:9px}
+.chat{padding:18px}
+.chat .head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--faint);margin-bottom:12px}
+.bubble{background:var(--paper);border-radius:16px 16px 16px 6px;padding:10px 14px;font-size:14.5px;line-height:1.5;margin-bottom:8px;max-width:92%}
+.bubble.me{background:var(--green-soft);border-radius:16px 16px 6px 16px;margin-left:auto}
+.who{font-size:12px;font-weight:600;margin-bottom:2px;color:var(--green)}
+.tag{font:500 12px "JetBrains Mono",monospace;color:var(--green);background:var(--green-soft);border-radius:6px;padding:1px 5px;white-space:nowrap}
+.bubble.me .tag{background:#fff}
+.swap{display:flex;justify-content:center;margin:-2px 0 10px;font-size:12px;color:var(--faint);gap:8px;align-items:center}
+.swap::before,.swap::after{content:"";height:1px;flex:1;background:var(--line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fact{padding:18px}
+.fact b{display:block;font-weight:500;font-size:16px;margin-bottom:4px}
+.fact span{font-size:14px;color:var(--muted);line-height:1.5;display:block}
+.fact .ic{width:30px;height:30px;border-radius:9px;background:var(--green-soft);display:grid;place-items:center;margin-bottom:12px}
+.fact .ic svg{width:16px;height:16px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.step{padding:14px}
+.step .shot{background:var(--paper);border-radius:14px;height:150px;display:grid;place-items:center;overflow:hidden;margin-bottom:14px}
+.step h3{font-size:18px;font-weight:500;letter-spacing:-.01em;margin:4px 6px 4px}
+.step p{font-size:14.5px;color:var(--muted);margin:0 6px 6px}
+.num{font-size:12px;color:var(--faint);margin:0 6px}
+.mini{font-size:11px;line-height:1.55;background:#1d1b1a;color:#ece8e2;border-radius:10px;padding:10px 12px;width:86%}
+.phone{width:92px;height:132px;border-radius:18px;background:#fff;box-shadow:0 10px 30px -14px rgba(70,50,30,.45);display:grid;place-items:center;transform:translateY(16px)}
+.qr{width:58px;height:58px;background:conic-gradient(from 90deg at 2px 2px,#14110f 90deg,transparent 0) 0 0/8px 8px,var(--paper);border-radius:6px;opacity:.85}
+.files{font-size:12px;line-height:1.9;color:var(--ink);text-align:left}
+.files div{padding-left:14px}.files .top{padding-left:0;font-weight:600}
+.end{text-align:center;padding:90px 0 60px}
+.end .ctas{justify-content:center}
+footer{padding:28px 32px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--faint)}
+footer a{color:var(--faint)}
+.js .rise{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+.js .rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .rise{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+@media (max-width:920px){
+  .hero,.row{grid-template-columns:1fr;gap:40px}
+  .row.flip .text{order:0}
+  section{padding:80px 0}
+  .steps{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding:0 18px}
+  nav{padding:14px 18px}
+  .pills .pill:not(.green){display:none}
+  header{padding-top:90px;min-height:auto}
+  .grid{grid-template-columns:1fr}
+  .term pre{font-size:11.5px}
+  .sub{font-size:18px}
+}
 </style>
+<script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
-<main>
-  <h1>WhatsApp Exporter</h1>
-  <p class="lede">Save every WhatsApp chat, photo, voice note and file into one ZIP on your Mac or Windows PC. Optionally hide names, numbers and other personal details first.</p>
-  <p class="small">Free and <a href="https://github.com/GirumDoctours/whatsapp-exporter">open source</a>. Unofficial: not made by or affiliated with WhatsApp or Meta.</p>
+<nav>
+  <a class="mark" href="#top">whatsapp exporter</a>
+  <div class="pills">
+    <a class="pill" href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a>
+    <a class="pill green" href="#get">Get it →</a>
+  </div>
+</nav>
 
-  <h2>Get it</h2>
-  <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-os="mac">Mac</button>
-    <button role="tab" aria-selected="false" data-os="win">Windows</button>
-  </div>
-  <div id="mac">
-    <div class="cmd"><code id="mac-line">/bin/bash -c "$(curl -fsSL https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.sh)"</code><button class="copy" data-copy="mac-line">Copy</button></div>
-    <ol>
-      <li>Open <b>Terminal</b> (⌘ Space, type Terminal, Enter), paste the line and press Enter.</li>
-      <li>Pick with the arrow keys. Start with <b>Run a quick test</b> (10 chats, about 3 minutes).</li>
-      <li>On your phone: <b>Settings → Linked Devices → Link a Device</b>, and scan the code.</li>
-      <li>Keep WhatsApp open. The ZIP lands on your Desktop.</li>
-    </ol>
-  </div>
-  <div id="win" hidden>
-    <div class="cmd"><code id="win-line">irm https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.ps1 | iex</code><button class="copy" data-copy="win-line">Copy</button></div>
-    <ol>
-      <li>Open <b>PowerShell</b> (Start, type PowerShell, Enter), paste the line and press Enter.</li>
-      <li>Pick with the arrow keys. Start with <b>Run a quick test</b> (10 chats, about 3 minutes).</li>
-      <li>On your phone: <b>Settings → Linked Devices → Link a Device</b>, and scan the code.</li>
-      <li>Keep WhatsApp open. The ZIP lands on your Desktop.</li>
-    </ol>
-  </div>
-  <p class="small" style="margin-top:14px">Needs macOS 13+ or 64-bit Windows 10/11.</p>
+<header id="top">
+  <div class="wrap hero">
+    <div>
+      <h1>Your whole WhatsApp,<br>in one ZIP.</h1>
+      <p class="sub">Every chat, photo and voice note, saved to your computer in one go. Hide the personal bits and share it with anyone.</p>
+      <div class="get" id="get">
+        <div class="seg" role="tablist">
+          <button role="tab" aria-selected="true" data-os="mac">Mac</button>
+          <button role="tab" aria-selected="false" data-os="win">Windows</button>
+        </div>
+        <div class="line" data-for="mac"><code class="mono" id="mac-line">/bin/bash -c "$(curl -fsSL https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.sh)"</code><button class="copy" data-copy="mac-line">Copy</button></div>
+        <div class="line" data-for="win" hidden><code class="mono" id="win-line">irm https://gist.githubusercontent.com/GirumDoctours/74929d87bb6c220c23bea4d9d1b37377/raw/install.ps1 | iex</code><button class="copy" data-copy="win-line">Copy</button></div>
+        <p class="fine" data-for="mac">Paste into Terminal and press Enter. macOS 13 or newer.</p>
+        <p class="fine" data-for="win" hidden>Paste into PowerShell and press Enter. Windows 10 or 11, 64-bit.</p>
+      </div>
+    </div>
+    <div class="tray rise">
+      <div class="term">
+        <div class="bar"><i></i><i></i><i></i><span>Terminal</span></div>
+<pre><span class="b">WhatsApp Exporter</span>
 
-  <h2>Good to know</h2>
-  <ul>
-    <li>One folder per chat with its messages and media, plus a spreadsheet of all chats.</li>
-    <li>Redaction swaps details for tags, like <span class="tag">{{PATIENT_FIRST_NAME}}</span>. It uses Claude with your own Anthropic API key (about $1 per 10 busy chats). Check the result before sharing.</li>
-    <li>Everything stays on your computer, except chat text sent to Claude when you redact.</li>
-    <li>It links like WhatsApp Web and unlinks itself when done. Unofficial clients are against WhatsApp's terms; read-only use is low risk, but not zero.</li>
-  </ul>
-</main>
-<footer>WhatsApp Exporter · <a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</footer>
+<span class="d">What would you like to do?</span>
+<span class="ok">✔</span> Run a quick test <span class="d">· your 10 latest chats</span>
+
+<span class="d">What should the ZIP contain?</span>
+<span class="ok">✔</span> Redact PII, then zip
+
+<span class="ok">✔</span> Linked to your phone
+<span class="ok">✔</span> Downloading messages      <span class="d">48 sec</span>
+<span class="ok">✔</span> Checking personal details <span class="d">2 min</span>
+<span class="ok">✔</span> Saving the redacted ZIP
+
+  Chats      <span class="g">10</span>
+  Messages   <span class="g">6,900</span>
+  Photos     <span class="g">319</span>
+
+<span class="d">Saved in</span>  ~/Desktop/WhatsApp-11-26-redacted.zip</pre>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="share">
+  <div class="wrap row">
+    <div class="tray rise">
+      <div class="card chat">
+        <div class="head"><span>Original</span><span>stays on your computer</span></div>
+        <div class="bubble"><div class="who">Maya Okafor</div>Hi! I'm Maya, 34, flying in from Leeds on 13 March. My sister Zoe's number is +44 7700 900123</div>
+        <div class="swap">redacted</div>
+        <div class="bubble"><div class="who"><span class="tag">{{PATIENT_FULL_NAME}}</span></div>Hi! I'm <span class="tag">{{PATIENT_FIRST_NAME}}</span>, <span class="tag">{{PATIENT_AGE}}</span>, flying in from <span class="tag">{{PATIENT_HOME_CITY}}</span> on <span class="tag">{{ARRIVAL_DATE}}</span>. My sister <span class="tag">{{PATIENT_SISTER_FIRST_NAME}}</span>'s number is <span class="tag">{{PATIENT_SISTER_PHONE}}</span></div>
+        <div class="bubble me">Great, Dr. <span class="tag">{{DOCTOR_LAST_NAME}}</span> at <span class="tag">{{CLINIC_NAME}}</span> can see you then</div>
+      </div>
+    </div>
+    <div class="text">
+      <div class="label">Share it freely</div>
+      <h2>Keep the conversation.<br>Lose the people.</h2>
+      <p>Choose redaction and every personal detail becomes a clear tag. The chat still reads naturally, so you can share it with a colleague, a researcher or an AI without giving anyone away.</p>
+      <ul class="bul">
+        <li>Names, numbers, emails, addresses, ages, IDs and bank details</li>
+        <li>ID photos replaced, text in screenshots blacked out</li>
+        <li>The same person keeps the same tag all the way through</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="yours" style="background:var(--paper2)">
+  <div class="wrap row flip">
+    <div class="tray rise">
+      <div class="grid">
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><b>Local</b><span>Runs on your computer. The ZIP never leaves it.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div><b>Open source</b><span>Every line is on GitHub under GPL-3.0.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/></svg></div><b>Your own keys</b><span>AI redaction uses your Anthropic key. No account with us.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><b>Hidden first</b><span>Known names and numbers are masked before anything goes to the AI.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div><b>Leaves no trace</b><span>Unlinks from your phone and deletes its working files when done.</span></div>
+        <div class="card fact"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></div><b>Free</b><span>Exporting costs nothing. Redaction is about $1 per 10 busy chats.</span></div>
+      </div>
+    </div>
+    <div class="text">
+      <div class="label">Private by design</div>
+      <h2>Yours, start<br>to finish.</h2>
+      <p>No servers of ours, no sign-up, nothing kept by us. You can read the code, run it yourself and bring your own AI key. When you redact, only chat text with known details already hidden goes to Anthropic. When it's done, the only thing left is your ZIP.</p>
+      <p style="font-size:14px;color:var(--faint)">Unofficial and not affiliated with WhatsApp or Meta. It links like WhatsApp Web, which is against WhatsApp's terms; read-only use is low risk, but not zero.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="label">How it works</div>
+    <h2>Three steps.<br>About three minutes.</h2>
+    <div class="steps">
+      <div class="tray step rise">
+        <div class="shot"><div class="mini mono"><span class="d">~ %</span> /bin/bash -c "$(curl -fsSL …/install.sh)"<br><span class="ok">✔</span> Downloading WhatsApp Exporter</div></div>
+        <div class="num">01</div><h3>Paste one line</h3><p>Copy it from the top of this page into Terminal or PowerShell.</p>
+      </div>
+      <div class="tray step rise">
+        <div class="shot"><div class="phone"><div class="qr"></div></div></div>
+        <div class="num">02</div><h3>Scan the code</h3><p>Settings → Linked Devices on your phone, like WhatsApp Web.</p>
+      </div>
+      <div class="tray step rise">
+        <div class="shot"><div class="files mono"><div class="top">📦 WhatsApp-11-26.zip</div><div>📁 Ada Example</div><div>📁 GP-Book club</div><div>📊 index.csv</div></div></div>
+        <div class="num">03</div><h3>Get your ZIP</h3><p>One folder per chat with its messages and media, on your Desktop.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="end">
+  <h2>Take your chats with you.</h2>
+  <div class="ctas"><a class="pill green" href="#get">Get it for your computer</a><a class="pill" href="https://github.com/GirumDoctours/whatsapp-exporter">Read the code</a></div>
+</div>
+<footer><span>whatsapp exporter · unofficial · not affiliated with WhatsApp or Meta</span><span><a href="https://github.com/GirumDoctours/whatsapp-exporter">GitHub</a> · GPL-3.0</span></footer>
+
 <script>
-document.querySelectorAll('.tabs button').forEach(function (b) {
-  b.addEventListener('click', function () { show(b.dataset.os); });
-});
-function show(os) {
-  document.querySelectorAll('.tabs button').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.os === os)); });
-  document.getElementById('mac').hidden = os !== 'mac';
-  document.getElementById('win').hidden = os !== 'win';
-}
-if (/win/i.test(navigator.platform || navigator.userAgent)) show('win');
-document.querySelectorAll('.copy').forEach(function (b) {
-  b.addEventListener('click', function () {
-    var text = document.getElementById(b.dataset.copy).textContent;
-    navigator.clipboard.writeText(text).then(function () {
-      b.textContent = 'Copied';
-      setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+(function () {
+  function show(os) {
+    document.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.os === os)); });
+    document.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.dataset.for !== os; });
+  }
+  document.querySelectorAll('.seg button').forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.os); }); });
+  if (/win/i.test(navigator.platform || navigator.userAgent)) show('win');
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent).then(function () {
+        b.textContent = 'Copied';
+        setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+      });
     });
   });
-});
+  var items = document.querySelectorAll('.rise');
+  if (!('IntersectionObserver' in window)) { items.forEach(function (el) { el.classList.add('in'); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  items.forEach(function (el) { io.observe(el); });
+})();
 </script>
 </body>
 </html>
