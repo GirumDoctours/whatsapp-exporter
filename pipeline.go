@@ -250,7 +250,7 @@ func (e *exporter) downloadMediaInto(ctx context.Context, t *terminal, plan *exp
 		return writeErr
 	}
 	err = downloader.run(ctx, queue, func(r progressReport) {
-		view.update(r.fraction, r.known, r.stalled)
+		view.update(r)
 	}, onDone)
 	writeErr := writer.close()
 	if err != nil {
@@ -292,7 +292,7 @@ func waitWithProgress(t *terminal, label string, work func() error, fraction fun
 			return nil
 		case <-ticker.C:
 			f, known := fraction()
-			view.update(f, known, false)
+			view.update(progressReport{fraction: f, known: known})
 		}
 	}
 }

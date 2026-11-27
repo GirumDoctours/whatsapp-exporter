@@ -158,3 +158,127 @@ func TestRenderSenderlessGroupMessagesUseProfileName(t *testing.T) {
 		}
 	}
 }
+
+func TestSmootherEasesInsteadOfJumping(t *testing.T) {
+	start := time.Now()
+	s := newSmoother(start)
+	now := start.Add(100 * time.Millisecond)
+	first := s.advance(0.4, false, now)
+	if first <= 0 || first >= 0.4 {
+		t.Fatalf("first frame after a jump to 40%% shows %.3f, want partway there", first)
+	}
+	previous := first
+	for range 30 {
+		now = now.Add(100 * time.Millisecond)
+		got := s.advance(0.4, false, now)
+		if got < previous {
+			t.Fatalf("bar went backward: %.4f after %.4f", got, previous)
+		}
+		previous = got
+	}
+	if previous < 0.4 {
+		t.Fatalf("after 3 seconds the bar shows %.4f, want it to reach 40%%", previous)
+	}
+}
+
+func TestSmootherCreepsButStaysBelowNextCheckpoint(t *testing.T) {
+	start := time.Now()
+	s := newSmoother(start)
+	now := start
+	for _, target := range []float64{0.1, 0.2, 0.3} {
+		now = now.Add(5 * time.Second)
+		s.advance(target, false, now)
+	}
+	ceiling := s.ceiling()
+	if ceiling <= 0.3 || ceiling >= 0.3+maxCreepStep {
+		t.Fatalf("ceiling %.3f should sit between the target and one step past it", ceiling)
+	}
+	var previous float64
+	for range 600 {
+		now = now.Add(100 * time.Millisecond)
+		got := s.advance(0.3, false, now)
+		if got < previous {
+			t.Fatalf("bar went backward while creeping: %.4f after %.4f", got, previous)
+		}
+		if got > ceiling {
+			t.Fatalf("creep passed the ceiling: %.4f > %.4f", got, ceiling)
+		}
+		previous = got
+	}
+	if previous <= 0.3 {
+		t.Fatalf("bar stayed frozen at %.4f while waiting", previous)
+	}
+	if got := s.advance(0.25, false, now.Add(time.Second)); got < previous {
+		t.Fatalf("a smaller report pulled the bar back to %.4f", got)
+	}
+}
+
+func TestSmootherHoldsStillWhilePaused(t *testing.T) {
+	start := time.Now()
+	s := newSmoother(start)
+	now := start
+	for range 40 {
+		now = now.Add(100 * time.Millisecond)
+		s.advance(0.3, false, now)
+	}
+	held := s.advance(0.3, true, now.Add(100*time.Millisecond))
+	for range 100 {
+		now = now.Add(100 * time.Millisecond)
+		if got := s.advance(0.3, true, now); got != held {
+			t.Fatalf("bar moved from %.4f to %.4f while paused", held, got)
+		}
+	}
+}
+
+func TestSmootherReachesTheEnd(t *testing.T) {
+	start := time.Now()
+	s := newSmoother(start)
+	now := start
+	var got float64
+	for range 40 {
+		now = now.Add(100 * time.Millisecond)
+		got = s.advance(1, false, now)
+	}
+	if got != 1 {
+		t.Fatalf("finished work shows %.4f, want exactly 1", got)
+	}
+}
+
+func TestHeartbeatBlinksOnlyWhileWorkMoves(t *testing.T) {
+	start := time.UnixMilli(0)
+	h := heartbeat{lastChange: start}
+	h.observe(0.1, "chat 1 of 5", start)
+	on := h.state(start, true, false)
+	off := h.state(start.Add(blinkPeriod), true, false)
+	if on != pulseOn || off != pulseOff {
+		t.Fatalf("active work should blink, got %v then %v", on, off)
+	}
+	later := start.Add(quietAfter + time.Second)
+	if got := h.state(later, true, false); got != pulseQuiet {
+		t.Fatalf("no change for a while should dim the dot, got %v", got)
+	}
+	h.observe(0.1, "chat 2 of 5", later)
+	if got := h.state(later, true, false); got != pulseOn {
+		t.Fatalf("new status text should restart the blink, got %v", got)
+	}
+	if got := h.state(later, true, true); got != pulseStalled {
+		t.Fatalf("a stalled phone should show the stalled dot, got %v", got)
+	}
+}
+
+func TestBarKeepsItsWidth(t *testing.T) {
+	original := glyphs
+	defer func() { glyphs = original }()
+	plain := original
+	plain.barEighths = nil
+	for name, set := range map[string]glyphSet{"unicode": original, "plain console": plain} {
+		glyphs = set
+		view := &progressView{t: &terminal{}}
+		for _, fraction := range []float64{0, 0.013, 0.37, 0.5, 0.999, 1} {
+			bar := view.bar(fraction, 40)
+			if got := len([]rune(bar)); got != 40 {
+				t.Errorf("%s bar at %.3f is %d cells wide, want 40: %q", name, fraction, got, bar)
+			}
+		}
+	}
+}

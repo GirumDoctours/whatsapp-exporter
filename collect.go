@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,6 +37,7 @@ type progressReport struct {
 	fraction float64
 	known    bool
 	stalled  bool
+	status   string
 }
 
 type syncProgress struct {
@@ -45,6 +47,7 @@ type syncProgress struct {
 	full        uint32
 	fullSeen    bool
 	lastHistory time.Time
+	received    int
 }
 
 func (s syncProgress) best() uint32 {
@@ -52,6 +55,13 @@ func (s syncProgress) best() uint32 {
 		return s.full
 	}
 	return max(s.bootstrap, s.recent)
+}
+
+func (s syncProgress) status() string {
+	if !s.seen {
+		return "Waiting for your phone to start sending history"
+	}
+	return fmt.Sprintf("Receiving history from your phone · %s messages so far", formatCount(s.received))
 }
 
 func (s syncProgress) fraction() (float64, bool) {
@@ -74,6 +84,8 @@ type collector struct {
 	connected     chan struct{}
 	loggedOut     chan struct{}
 	loggedOutOnce sync.Once
+
+	fetchedOlder atomic.Int64
 
 	mu           sync.Mutex
 	sync         syncProgress
@@ -171,6 +183,9 @@ func (c *collector) onHistorySync(evt *events.HistorySync) {
 	c.mu.Lock()
 	c.sync.seen = true
 	c.sync.lastHistory = time.Now()
+	if syncType != waHistorySync.HistorySync_ON_DEMAND {
+		c.sync.received += totalAdded
+	}
 	switch syncType {
 	case waHistorySync.HistorySync_INITIAL_BOOTSTRAP:
 		c.sync.bootstrap = max(c.sync.bootstrap, progress)
@@ -309,7 +324,7 @@ func (c *collector) waitForHistory(ctx context.Context, freshLink bool, report f
 		fraction, known := state.fraction()
 		stalled := (freshLink && !state.seen && time.Since(start) > historyNoStartStall) ||
 			(state.seen && best > 0 && best < 100 && idle > stallThreshold)
-		report(progressReport{fraction: fraction, known: known, stalled: stalled})
+		report(progressReport{fraction: fraction, known: known, stalled: stalled, status: state.status()})
 
 		switch {
 		case state.seen && best >= 100 && idle > historyIdleAfterDone:
@@ -338,7 +353,8 @@ func (c *collector) backfill(ctx context.Context, only map[string]bool, report f
 	if len(chats) == 0 {
 		return true, nil
 	}
-	var checked, unfinished atomic.Int64
+	var checked, unfinished, started atomic.Int64
+	c.fetchedOlder.Store(0)
 	jobs := make(chan string)
 	var wg sync.WaitGroup
 	for range backfillWorkers {
@@ -346,6 +362,7 @@ func (c *collector) backfill(ctx context.Context, only map[string]bool, report f
 		go func() {
 			defer wg.Done()
 			for chat := range jobs {
+				started.Add(1)
 				if !c.backfillChat(ctx, chat) {
 					unfinished.Add(1)
 				}
@@ -358,6 +375,7 @@ func (c *collector) backfill(ctx context.Context, only map[string]bool, report f
 			fraction: float64(checked.Load()) / float64(len(chats)),
 			known:    true,
 			stalled:  c.phone.stalled(),
+			status:   backfillStatus(int(started.Load()), len(chats), int(c.fetchedOlder.Load())),
 		})
 	})
 feed:
@@ -394,6 +412,7 @@ func (c *collector) backfillChat(ctx context.Context, chatJID string) bool {
 			c.markBackfillDone(ctx, chatJID)
 			return true
 		case err == nil:
+			c.fetchedOlder.Add(int64(added))
 			continue
 		case errors.Is(err, errNoBackfillAnswer) && c.phone.repliedSince(sentAt):
 			c.log.Infof("No older messages offered for %s", chatJID)
@@ -410,6 +429,14 @@ func (c *collector) backfillChat(ctx context.Context, chatJID string) bool {
 		}
 	}
 	return false
+}
+
+func backfillStatus(started, total, fetched int) string {
+	status := fmt.Sprintf("Checking older messages: chat %s of %s", formatCount(min(max(started, 1), total)), formatCount(total))
+	if fetched > 0 {
+		status += fmt.Sprintf(" · %s older messages found", formatCount(fetched))
+	}
+	return status
 }
 
 func (c *collector) markBackfillDone(ctx context.Context, chatJID string) {

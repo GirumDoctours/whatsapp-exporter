@@ -259,7 +259,8 @@ func (e *exporter) downloadMessages(ctx context.Context, t *terminal) error {
 	}
 	if !e.historyReady {
 		err := e.col.waitForHistory(ctx, freshLink, func(r progressReport) {
-			view.update(r.fraction*syncShare, r.known, r.stalled)
+			r.fraction *= syncShare
+			view.update(r)
 		})
 		if err != nil {
 			view.abandon()
@@ -268,7 +269,7 @@ func (e *exporter) downloadMessages(ctx context.Context, t *terminal) error {
 	}
 	_ = e.arc.setMeta(ctx, "initial_sync_done", "1")
 
-	e.whileShowing(ctx, view, syncShare, func() { e.refreshChatDetails(ctx) })
+	e.whileShowing(ctx, view, progressReport{fraction: syncShare, known: true, status: "Updating chat and group names"}, func() { e.refreshChatDetails(ctx) })
 	if e.testMode {
 		if err := e.selectTestChats(ctx); err != nil {
 			view.abandon()
@@ -277,7 +278,8 @@ func (e *exporter) downloadMessages(ctx context.Context, t *terminal) error {
 	}
 
 	complete, err := e.col.backfill(ctx, e.onlyChats, func(r progressReport) {
-		view.update(syncShare+(1-syncShare)*r.fraction, true, r.stalled)
+		r.fraction = syncShare + (1-syncShare)*r.fraction
+		view.update(r)
 	})
 	if err != nil {
 		view.abandon()
@@ -290,8 +292,8 @@ func (e *exporter) downloadMessages(ctx context.Context, t *terminal) error {
 	return nil
 }
 
-func (e *exporter) whileShowing(ctx context.Context, view *progressView, fraction float64, work func()) {
-	stop := every(ctx, progressTick, func() { view.update(fraction, true, false) })
+func (e *exporter) whileShowing(ctx context.Context, view *progressView, report progressReport, work func()) {
+	stop := every(ctx, progressTick, func() { view.update(report) })
 	work()
 	stop()
 }
@@ -424,7 +426,7 @@ func (e *exporter) connect(ctx context.Context, t *terminal) error {
 			view.abandon()
 			return ctx.Err()
 		case <-ticker.C:
-			view.update(0, false, false)
+			view.update(progressReport{})
 		}
 	}
 }
