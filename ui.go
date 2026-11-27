@@ -41,6 +41,8 @@ type menuOption struct {
 type glyphSet struct {
 	check, warn, pointer, androidMenu          string
 	topLeft, topRight, bottomLeft, bottomRight string
+	heartbeat                                  string
+	barEighths                                 []string
 }
 
 var glyphs = chooseGlyphs()
@@ -50,11 +52,14 @@ func chooseGlyphs() glyphSet {
 		return glyphSet{
 			check: "√", warn: "!", pointer: ">", androidMenu: "the menu",
 			topLeft: "┌", topRight: "┐", bottomLeft: "└", bottomRight: "┘",
+			heartbeat: "•",
 		}
 	}
 	return glyphSet{
 		check: "✔", warn: "⚠", pointer: "❯", androidMenu: "⋮",
 		topLeft: "╭", topRight: "╮", bottomLeft: "╰", bottomRight: "╯",
+		heartbeat:  "●",
+		barEighths: []string{"", "▏", "▎", "▍", "▌", "▋", "▊", "▉"},
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	progressTick       = 200 * time.Millisecond
+	progressTick       = 100 * time.Millisecond
 	stallThreshold     = 20 * time.Second
 	phonePatienceLimit = 15 * time.Minute
 	labelWidth         = 22
@@ -23,59 +23,85 @@ const (
 )
 
 type progressView struct {
-	t       *terminal
-	extra   func() string
-	label   string
-	started time.Time
-	shown   float64
-	frame   int
-	eta     etaEstimator
+	t         *terminal
+	extra     func() string
+	label     string
+	started   time.Time
+	frame     int
+	eta       etaEstimator
+	smooth    smoother
+	heartbeat heartbeat
+	now       func() time.Time
 }
 
 func newProgressView(t *terminal, label string) *progressView {
 	now := time.Now()
-	return &progressView{t: t, label: label, started: now, eta: etaEstimator{start: now, last: now}}
+	return &progressView{
+		t:         t,
+		label:     label,
+		started:   now,
+		eta:       etaEstimator{start: now, last: now},
+		smooth:    newSmoother(now),
+		heartbeat: heartbeat{lastChange: now},
+		now:       time.Now,
+	}
 }
 
-func (p *progressView) update(fraction float64, known, stalled bool) {
+func (p *progressView) update(r progressReport) {
 	p.frame++
-	fraction = math.Max(0, math.Min(1, fraction))
-	if fraction > p.shown {
-		p.shown = fraction
-	}
-	p.eta.observe(stalled)
+	now := p.now()
+	target := math.Max(0, math.Min(1, r.fraction))
+	shown := p.smooth.advance(target, r.stalled, now)
+	p.heartbeat.observe(target, r.status, now)
+	p.eta.observe(r.stalled)
 
 	width := p.t.width()
-	barWidth := max(10, min(40, width-labelWidth-hintWidth-14))
+	barWidth := max(10, min(40, width-labelWidth-hintWidth-17))
 	label := p.label + strings.Repeat(" ", max(1, labelWidth-len([]rune(p.label))))
 	var bar, percent, hint string
-	if known {
-		bar = p.bar(barWidth)
-		percent = fmt.Sprintf("%3d%%", int(p.shown*100))
-		hint = p.eta.text(p.shown, stalled)
+	if r.known {
+		bar = p.bar(shown, barWidth)
+		percent = fmt.Sprintf("%3d%%", int(shown*100))
+		hint = p.eta.text(p.smooth.target, r.stalled)
 	} else {
 		bar = p.bounce(barWidth)
 		percent = "    "
 		hint = "starting…"
-		if stalled {
+		if r.stalled {
 			hint = "paused"
 		}
 	}
-	lines := []string{"  " + p.t.paint(ansiBold, label) + bar + "  " + percent + "  " + p.t.paint(ansiDim, hint)}
+	dot := p.dot(p.heartbeat.state(now, r.known, r.stalled))
+	lines := []string{"  " + p.t.paint(ansiBold, label) + bar + "  " + percent + "  " + dot + "  " + p.t.paint(ansiDim, hint)}
+	indent := "  " + strings.Repeat(" ", labelWidth)
+	if r.status != "" {
+		lines = append(lines, indent+p.t.paint(ansiDim, r.status))
+	}
 	if p.extra != nil {
 		if status := p.extra(); status != "" {
-			lines = append(lines, "  "+strings.Repeat(" ", labelWidth)+p.t.paint(ansiDim, status))
+			lines = append(lines, indent+p.t.paint(ansiDim, status))
 		}
 	}
-	if stalled {
+	if r.stalled {
 		lines = append(lines, "", "  "+p.t.paint(ansiYellow+ansiBold, glyphs.warn+stallHeadline), "  "+p.t.paint(ansiYellow, stallAdvice))
 	}
 	p.t.live(lines...)
 }
 
-func (p *progressView) bar(width int) string {
-	filled := int(math.Round(p.shown * float64(width)))
-	return p.t.paint(ansiGreen, strings.Repeat("█", filled)) + p.t.paint(ansiDim, strings.Repeat("░", width-filled))
+func (p *progressView) bar(fraction float64, width int) string {
+	cells := fraction * float64(width)
+	filled := int(cells)
+	partial := ""
+	if steps := len(glyphs.barEighths); steps > 0 && filled < width {
+		partial = glyphs.barEighths[int((cells-float64(filled))*float64(steps))]
+	} else if steps == 0 {
+		filled = int(math.Round(cells))
+	}
+	empty := width - filled
+	if partial != "" {
+		empty--
+	}
+	return p.t.paint(ansiGreen, strings.Repeat("█", filled)+partial) + p.t.paint(ansiDim, strings.Repeat("░", empty))
 }
 
 func (p *progressView) bounce(width int) string {
@@ -88,6 +114,18 @@ func (p *progressView) bounce(width int) string {
 	return p.t.paint(ansiDim, strings.Repeat("░", pos)) +
 		p.t.paint(ansiGreen, strings.Repeat("█", block)) +
 		p.t.paint(ansiDim, strings.Repeat("░", span-pos))
+}
+
+func (p *progressView) dot(state pulse) string {
+	switch state {
+	case pulseOn:
+		return p.t.paint(ansiGreen+ansiBold, glyphs.heartbeat)
+	case pulseQuiet:
+		return p.t.paint(ansiGreen+ansiDim, glyphs.heartbeat)
+	case pulseStalled:
+		return p.t.paint(ansiYellow, glyphs.heartbeat)
+	}
+	return " "
 }
 
 func (p *progressView) finish(note string) {
@@ -236,4 +274,101 @@ func (w *phoneWatch) waitForActivity(ctx context.Context, since time.Time) bool 
 		case <-ticker.C:
 		}
 	}
+}
+
+const (
+	easeTime      = 350 * time.Millisecond
+	minCreepTime  = 4 * time.Second
+	creepShare    = 0.8
+	maxCreepStep  = 0.08
+	firstStepHint = 0.03
+)
+
+type smoother struct {
+	shown        float64
+	target       float64
+	step         float64
+	interval     time.Duration
+	lastFrame    time.Time
+	lastTargetAt time.Time
+}
+
+func newSmoother(now time.Time) smoother {
+	return smoother{step: firstStepHint, interval: minCreepTime, lastFrame: now, lastTargetAt: now}
+}
+
+func (s *smoother) advance(target float64, hold bool, now time.Time) float64 {
+	if target > s.target {
+		s.learn(target-s.target, now.Sub(s.lastTargetAt))
+		s.target = target
+		s.lastTargetAt = now
+	}
+	dt := now.Sub(s.lastFrame).Seconds()
+	s.lastFrame = now
+	if dt <= 0 {
+		return s.shown
+	}
+	if s.shown < s.target {
+		s.shown += (s.target - s.shown) * (1 - math.Exp(-dt/easeTime.Seconds()))
+		if s.target-s.shown < 0.0005 {
+			s.shown = s.target
+		}
+		return s.shown
+	}
+	if ceiling := s.ceiling(); !hold && s.shown < ceiling {
+		s.shown += (ceiling - s.shown) * (1 - math.Exp(-dt/s.interval.Seconds()))
+	}
+	return s.shown
+}
+
+func (s *smoother) learn(step float64, gap time.Duration) {
+	s.step = s.step*0.7 + math.Min(step, maxCreepStep)*0.3
+	s.interval = max(minCreepTime, time.Duration(float64(s.interval)*0.7+float64(gap)*0.3))
+}
+
+func (s *smoother) ceiling() float64 {
+	if s.target >= 1 {
+		return 1
+	}
+	return math.Min(s.target+s.step*creepShare, 0.995)
+}
+
+type pulse int
+
+const (
+	pulseOff pulse = iota
+	pulseOn
+	pulseQuiet
+	pulseStalled
+)
+
+const (
+	blinkPeriod = 600 * time.Millisecond
+	quietAfter  = 5 * time.Second
+)
+
+type heartbeat struct {
+	target     float64
+	status     string
+	lastChange time.Time
+}
+
+func (h *heartbeat) observe(target float64, status string, now time.Time) {
+	if target != h.target || status != h.status {
+		h.target = target
+		h.status = status
+		h.lastChange = now
+	}
+}
+
+func (h *heartbeat) state(now time.Time, known, stalled bool) pulse {
+	switch {
+	case stalled:
+		return pulseStalled
+	case known && now.Sub(h.lastChange) > quietAfter:
+		return pulseQuiet
+	case (now.UnixMilli()/blinkPeriod.Milliseconds())%2 == 0:
+		return pulseOn
+	}
+	return pulseOff
 }

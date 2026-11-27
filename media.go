@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -135,6 +136,7 @@ func (d *mediaDownloader) run(ctx context.Context, queue []storedMessage, report
 			fraction: float64(processed.Load()) / float64(len(queue)),
 			known:    true,
 			stalled:  d.phone.stalled(),
+			status:   fmt.Sprintf("%s of %s photos and files", formatCount(int(processed.Load())), formatCount(len(queue))),
 		})
 	})
 feed:
